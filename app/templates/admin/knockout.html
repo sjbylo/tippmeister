@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Knockout Teams') }} - Der Tippmeister{% endblock %}
+{% block content %}
+<div class="admin-page">
+	<h2>{{ _('Manage Knockout Stage Teams') }}</h2>
+	<p><a href="{{ url_for('admin.dashboard') }}">&larr; {{ _('Back to Admin') }}</a></p>
+	<p>{{ _('Update placeholder team names (e.g. 1A, W73) with actual qualified teams.') }}</p>
+
+	<div class="knockout-list">
+		{% for match in matches %}
+		<div class="knockout-card {{ 'teams-known' if match.has_known_teams }}">
+			<div class="knockout-header">
+				<span class="match-num">{{ _('Match') }} {{ match.match_num }}</span>
+				<span class="knockout-round">{{ match.round }}</span>
+				<span class="knockout-time">
+					{% if match.kickoff_utc %}{{ match.kickoff_utc.strftime('%b %d, %H:%M UTC') }}{% endif %}
+				</span>
+			</div>
+		<form method="POST" class="knockout-form">
+			<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+			<input type="hidden" name="match_id" value="{{ match.id }}">
+				<div class="knockout-inputs">
+					<input type="text" name="team1" value="{{ match.team1 }}" placeholder="{{ _('Team 1') }}">
+					<span class="knockout-vs">{{ _('vs') }}</span>
+					<input type="text" name="team2" value="{{ match.team2 }}" placeholder="{{ _('Team 2') }}">
+				</div>
+				<button type="submit" class="btn btn-sm">{{ _('Update') }}</button>
+			</form>
+		</div>
+		{% endfor %}
+	</div>
+</div>
+{% endblock %}

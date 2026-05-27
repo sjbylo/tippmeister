@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Rules') }} - Der Tippmeister{% endblock %}
+{% block content %}
+<div class="rules-page">
+	<h2>{{ _('Rules') }}</h2>
+
+	<div class="rules-section">
+		<h3>{{ _('How It Works') }}</h3>
+		<ol>
+			<li>{{ _('Predict the final score for each match <strong>before kickoff</strong>.') }}</li>
+			<li>{{ _('For knockout matches, if you predict a draw, you must also pick the <strong>penalty shootout winner</strong>.') }}</li>
+			<li>{{ _('Once a match kicks off, your prediction is <strong>locked</strong> and visible to other players.') }}</li>
+			<li>{{ _('Points are awarded automatically when results are entered.') }}</li>
+		</ol>
+	</div>
+
+	<div class="rules-section">
+		<h3>{{ _('Scoring') }}</h3>
+		<table class="rules-table">
+			<thead>
+				<tr>
+					<th>{{ _('Result') }}</th>
+					<th>{{ _('Points') }}</th>
+					<th>{{ _('Example') }}</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><strong>{{ _('Correct winner') }}</strong></td>
+					<td class="pts">{{ _('1 pt') }}</td>
+					<td>{{ _('Match: 2-0 — You predicted: 1-0') }}</td>
+				</tr>
+				<tr>
+					<td><strong>{{ _('Exact score') }}</strong></td>
+					<td class="pts">{{ _('3 pts') }}</td>
+					<td>{{ _('Match: 2-1 — You predicted: 2-1') }}</td>
+				</tr>
+				<tr>
+					<td><strong>{{ _('Correct draw') }}</strong></td>
+					<td class="pts">{{ _('1 pt') }}</td>
+					<td>{{ _('Match: 1-1 — You predicted: 0-0') }}</td>
+				</tr>
+				<tr>
+					<td><strong>{{ _('Exact draw') }}</strong></td>
+					<td class="pts">{{ _('3 pts') }}</td>
+					<td>{{ _('Match: 1-1 — You predicted: 1-1') }}</td>
+				</tr>
+				<tr>
+					<td><strong>{{ _('Penalty winner bonus (knockout only)') }}</strong></td>
+					<td class="pts">{{ _('+1 pt') }}</td>
+					<td>{{ _('You correctly predicted who advances on penalties') }}</td>
+				</tr>
+			</tbody>
+		</table>
+		<p class="rules-note"><strong>{{ _('Maximum per match: 4 points') }}</strong> {{ _('(exact draw + penalty bonus in knockout)') }}</p>
+	</div>
+
+	<div class="rules-section">
+		<h3>{{ _('Which Score Counts?') }}</h3>
+		<ul>
+			<li><strong>{{ _('Group stage:') }}</strong> {{ _('Full-time score (90 minutes).') }}</li>
+			<li><strong>{{ _('Knockout stage:') }}</strong> {{ _('After Extra Time (AET) score if extra time was played, otherwise the 90-minute score. The penalty shootout determines who advances but does not change the match score.') }}</li>
+		</ul>
+	</div>
+
+	<div class="rules-section">
+		<h3>{{ _('Important') }}</h3>
+		<ul>
+			<li>{{ _('Predictions must be submitted <strong>before the match kicks off</strong>.') }}</li>
+			<li>{{ _('You can update your predictions as many times as you want before kickoff.') }}</li>
+			<li>{{ _('Other players\' predictions are <strong>hidden until kickoff</strong>.') }}</li>
+			<li>{{ _('The leaderboard updates in real time as results come in.') }}</li>
+		</ul>
+	</div>
+</div>
+{% endblock %}

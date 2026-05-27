@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}{{ _('My Tips') }} - Der Tippmeister{% endblock %}
+{% block content %}
+<div class="predictions-page">
+	<h2>{{ _('My Tips') }}</h2>
+	{% if not matches %}
+	<div class="empty-state">
+		<p>{{ _('No upcoming matches with known teams to predict.') }}</p>
+	</div>
+	{% else %}
+	<form method="POST" class="predictions-form" id="predictionsForm">
+		<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+		<div class="pred-list">
+			{% for match in matches %}
+			{% set pred = user_preds.get(match.id) %}
+			<div class="pred-row" data-knockout="{{ 'true' if match.is_knockout else 'false' }}" data-match-id="{{ match.id }}">
+				<div class="pred-match-info">
+					<span class="pred-round">{{ match.group_name or match.round }}</span>
+					<span class="pred-time" data-utc="{{ match.kickoff_utc.isoformat() if match.kickoff_utc else '' }}">
+						{% if match.kickoff_utc %}{{ match.kickoff_utc.strftime('%b %d, %H:%M UTC') }}{% endif %}
+					</span>
+					<span class="pred-venue">{{ match.venue }}</span>
+				</div>
+				<div class="pred-input-row">
+					<label class="team-label">{{ match.team1 }}</label>
+					<input type="number" name="t1_{{ match.id }}" min="0" max="99"
+						   value="{{ pred.team1_score if pred and pred.team1_score is not none else '' }}"
+						   class="score-input" data-side="t1" data-match="{{ match.id }}">
+					<span class="pred-dash">-</span>
+					<input type="number" name="t2_{{ match.id }}" min="0" max="99"
+						   value="{{ pred.team2_score if pred and pred.team2_score is not none else '' }}"
+						   class="score-input" data-side="t2" data-match="{{ match.id }}">
+					<label class="team-label">{{ match.team2 }}</label>
+				</div>
+				{% if match.is_knockout %}
+				<div class="pen-winner-row" id="pen_row_{{ match.id }}"
+					 style="display: {% if pred and pred.team1_score is not none and pred.team1_score == pred.team2_score %}flex{% else %}none{% endif %}">
+					<label>{{ _('Penalty winner') }}:</label>
+					<select name="pen_{{ match.id }}" class="pen-select">
+						<option value="">{{ _('-- Select --') }}</option>
+						<option value="{{ match.team1 }}" {{ 'selected' if pred and pred.penalty_winner == match.team1 }}>{{ match.team1 }}</option>
+						<option value="{{ match.team2 }}" {{ 'selected' if pred and pred.penalty_winner == match.team2 }}>{{ match.team2 }}</option>
+					</select>
+				</div>
+				{% endif %}
+			</div>
+			{% endfor %}
+		</div>
+		<div class="form-actions">
+			<button type="submit" class="btn btn-primary btn-lg">{{ _('Submit Predictions') }}</button>
+		</div>
+	</form>
+	{% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.querySelectorAll('.score-input').forEach(function(input) {
+	input.addEventListener('input', function() {
+		var matchId = this.dataset.match;
+		var row = this.closest('.pred-row');
+		if (row.dataset.knockout !== 'true') return;
+
+		var t1 = row.querySelector('[name="t1_' + matchId + '"]').value;
+		var t2 = row.querySelector('[name="t2_' + matchId + '"]').value;
+		var penRow = document.getElementById('pen_row_' + matchId);
+		if (!penRow) return;
+
+		if (t1 !== '' && t2 !== '' && parseInt(t1) === parseInt(t2)) {
+			penRow.style.display = 'flex';
+		} else {
+			penRow.style.display = 'none';
+		}
+	});
+});
+</script>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Admin') }} - Der Tippmeister{% endblock %}
+{% block content %}
+<div class="admin-page">
+	<h2>{{ _('Admin Dashboard') }}</h2>
+
+	<div class="admin-cards">
+		<div class="admin-card">
+			<h3>{{ _('Match Status') }}</h3>
+			<ul>
+				<li>{{ _('Scheduled:') }} <strong>{{ scheduled }}</strong></li>
+				<li>{{ _('Live:') }} <strong>{{ live }}</strong></li>
+				<li>{{ _('Finished:') }} <strong>{{ finished }}</strong> ({{ _('auto:') }} {{ auto_count }}, {{ _('manual:') }} {{ manual_count }})</li>
+			</ul>
+		</div>
+
+		<div class="admin-card">
+			<h3>{{ _('Auto-Fetch') }}</h3>
+			{% if api_key_set %}
+			<p>{{ _('API Key:') }} <span class="badge badge-ok">{{ _('Configured') }}</span></p>
+			<p>{{ _('Status:') }} <span class="badge {{ 'badge-warn' if fetch_paused else 'badge-ok' }}">{{ _('Paused') if fetch_paused else _('Active') }}</span></p>
+		<form method="POST" action="{{ url_for('admin.toggle_fetch') }}" style="display:inline">
+			<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+			<button type="submit" class="btn btn-sm">{{ _('Resume') if fetch_paused else _('Pause') }}</button>
+		</form>
+			{% else %}
+			<p>{{ _('API Key:') }} <span class="badge badge-warn">{{ _('Not set') }}</span></p>
+			<p><small>{{ _('Set API_FOOTBALL_KEY env var to enable auto-fetch.') }}</small></p>
+			{% endif %}
+		</div>
+
+		<div class="admin-card">
+			<h3>{{ _('Invite Link') }}</h3>
+			<p class="invite-url"><code>/register/{{ invite_token }}</code></p>
+		<form method="POST" action="{{ url_for('admin.regenerate_invite') }}" style="display:inline">
+			<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+			<button type="submit" class="btn btn-sm">{{ _('Regenerate') }}</button>
+		</form>
+		</div>
+
+		<div class="admin-card">
+			<h3>{{ _('Time Warp') }}</h3>
+		<form method="POST" action="{{ url_for('admin.time_warp') }}">
+			<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+			<div class="form-group">
+					<label for="time_warp">{{ _('Override "now" (UTC):') }}</label>
+					<input type="datetime-local" id="time_warp" name="time_warp"
+						   value="{{ time_warp_value[:16] if time_warp_value else '' }}">
+				</div>
+				<button type="submit" class="btn btn-sm">{{ _('Set') }}</button>
+				{% if time_warp_value %}
+				<p class="warp-active">{{ _('Time warped to:') }} {{ time_warp_value }}</p>
+				<button type="submit" name="time_warp" value="" class="btn btn-sm btn-danger">{{ _('Reset to real time') }}</button>
+				{% endif %}
+			</form>
+		</div>
+	</div>
+
+	<div class="admin-nav">
+		<a href="{{ url_for('admin.results') }}" class="btn btn-primary">{{ _('Enter Results') }}</a>
+		<a href="{{ url_for('admin.knockout') }}" class="btn btn-primary">{{ _('Manage Knockout Teams') }}</a>
+		<a href="{{ url_for('admin.all_predictions') }}" class="btn btn-primary">{{ _('View All Predictions') }}</a>
+	</div>
+</div>
+{% endblock %}

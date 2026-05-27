@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Enter Results') }} - Der Tippmeister{% endblock %}
+{% block content %}
+<div class="admin-page">
+	<h2>{{ _('Enter / Edit Match Results') }}</h2>
+	<p><a href="{{ url_for('admin.dashboard') }}">&larr; {{ _('Back to Admin') }}</a></p>
+
+	<div class="results-list">
+		{% for match in matches %}
+		<div class="result-card {{ 'result-finished' if match.status == 'finished' }}">
+			<div class="result-header">
+				<span class="match-num">{{ _('Match') }} {{ match.match_num }}</span>
+				<span class="result-round">{{ match.group_name or match.round }}</span>
+				{% if match.status == 'finished' %}
+				<span class="badge badge-finished">{{ match.result_source|upper }}</span>
+				{% endif %}
+			</div>
+			<div class="result-teams">
+				<strong>{{ match.team1 }}</strong> {{ _('vs') }} <strong>{{ match.team2 }}</strong>
+			</div>
+			{% if match.status == 'finished' %}
+			<div class="result-current">{{ _('Current:') }} {{ match.score_display }}</div>
+			{% endif %}
+
+		<form method="POST" class="result-form">
+			<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+			<input type="hidden" name="match_id" value="{{ match.id }}">
+				<div class="result-inputs">
+					<div class="score-group">
+						<label>{{ match.team1 }}</label>
+						<input type="number" name="team1_score" min="0" max="99"
+							   value="{{ match.team1_score if match.team1_score is not none else '' }}">
+					</div>
+					<span class="result-dash">-</span>
+					<div class="score-group">
+						<label>{{ match.team2 }}</label>
+						<input type="number" name="team2_score" min="0" max="99"
+							   value="{{ match.team2_score if match.team2_score is not none else '' }}">
+					</div>
+				</div>
+
+				{% if match.is_knockout %}
+				<details class="extra-scores">
+					<summary>{{ _('Extra Time / Penalties') }}</summary>
+					<div class="result-inputs">
+						<div class="score-group">
+							<label>{{ _('AET') }} {{ match.team1 }}</label>
+							<input type="number" name="team1_extra" min="0"
+								   value="{{ match.team1_extra if match.team1_extra is not none else '' }}">
+						</div>
+						<span class="result-dash">-</span>
+						<div class="score-group">
+							<label>{{ _('AET') }} {{ match.team2 }}</label>
+							<input type="number" name="team2_extra" min="0"
+								   value="{{ match.team2_extra if match.team2_extra is not none else '' }}">
+						</div>
+					</div>
+					<div class="result-inputs">
+						<div class="score-group">
+							<label>{{ _('PEN') }} {{ match.team1 }}</label>
+							<input type="number" name="team1_pen" min="0"
+								   value="{{ match.team1_pen if match.team1_pen is not none else '' }}">
+						</div>
+						<span class="result-dash">-</span>
+						<div class="score-group">
+							<label>{{ _('PEN') }} {{ match.team2 }}</label>
+							<input type="number" name="team2_pen" min="0"
+								   value="{{ match.team2_pen if match.team2_pen is not none else '' }}">
+						</div>
+					</div>
+					<div class="form-group">
+						<label>{{ _('Penalty Winner') }}</label>
+						<select name="penalty_winner">
+							<option value="">{{ _('None') }}</option>
+							<option value="{{ match.team1 }}" {{ 'selected' if match.penalty_winner == match.team1 }}>{{ match.team1 }}</option>
+							<option value="{{ match.team2 }}" {{ 'selected' if match.penalty_winner == match.team2 }}>{{ match.team2 }}</option>
+						</select>
+					</div>
+				</details>
+				{% endif %}
+
+				<button type="submit" class="btn btn-sm btn-primary">{{ _('Save Result') }}</button>
+			</form>
+		</div>
+		{% endfor %}
+	</div>
+</div>
+{% endblock %}

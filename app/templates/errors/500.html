@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}500 - Der Tippmeister{% endblock %}
+{% block content %}
+<div class="error-page">
+	<h2>{{ _('500 — Server Error') }}</h2>
+	<p>{{ _('Something went wrong. Please try again later.') }}</p>
+	<a href="{{ url_for('main.matches') }}" class="btn btn-primary">{{ _('Back to Matches') }}</a>
+</div>
+{% endblock %}

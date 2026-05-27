@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Leaderboard') }} - Der Tippmeister{% endblock %}
+{% block content %}
+<div class="leaderboard-page">
+	<h2>{{ _('Leaderboard') }}</h2>
+
+	<div class="leaderboard-controls">
+		<a href="?top=3" class="btn btn-sm {{ 'btn-active' if top_n == 3 }}">{{ _('Top 3') }}</a>
+		<a href="?top=5" class="btn btn-sm {{ 'btn-active' if top_n == 5 }}">{{ _('Top 5') }}</a>
+		<a href="?top=10" class="btn btn-sm {{ 'btn-active' if top_n == 10 }}">{{ _('Top 10') }}</a>
+		<a href="?" class="btn btn-sm {{ 'btn-active' if top_n == 0 }}">{{ _('All') }}</a>
+	</div>
+
+	<div class="leaderboard-table-wrap">
+		<table class="leaderboard-table">
+			<thead>
+				<tr>
+					<th>#</th>
+					<th>{{ _('Player') }}</th>
+					<th>{{ _('Points') }}</th>
+					<th>{{ _('Predictions') }}</th>
+				</tr>
+			</thead>
+			<tbody>
+				{% for row in scores %}
+				<tr class="{{ 'highlight' if row.id == current_user.id }}
+						   {{ 'top-1' if loop.index == 1 }}
+						   {{ 'top-2' if loop.index == 2 }}
+						   {{ 'top-3' if loop.index == 3 }}">
+					<td class="rank">
+						{% if loop.index == 1 %}&#x1F947;{% elif loop.index == 2 %}&#x1F948;{% elif loop.index == 3 %}&#x1F949;{% else %}{{ loop.index }}{% endif %}
+					</td>
+					<td class="player-name">{{ row.display_name }}</td>
+					<td class="points">{{ row.total_points }}</td>
+					<td class="pred-count">{{ row.predictions_made }}</td>
+				</tr>
+				{% endfor %}
+			</tbody>
+		</table>
+	</div>
+</div>
+{% endblock %}
