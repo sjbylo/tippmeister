@@ -4,13 +4,6 @@
 <div class="leaderboard-page">
 	<h2>{{ _('Leaderboard') }}</h2>
 
-	<div class="leaderboard-controls">
-		<a href="?top=3" class="btn btn-sm {{ 'btn-active' if top_n == 3 }}">{{ _('Top 3') }}</a>
-		<a href="?top=5" class="btn btn-sm {{ 'btn-active' if top_n == 5 }}">{{ _('Top 5') }}</a>
-		<a href="?top=10" class="btn btn-sm {{ 'btn-active' if top_n == 10 }}">{{ _('Top 10') }}</a>
-		<a href="?" class="btn btn-sm {{ 'btn-active' if top_n == 0 }}">{{ _('All') }}</a>
-	</div>
-
 	<div class="leaderboard-table-wrap">
 		<table class="leaderboard-table">
 			<thead>

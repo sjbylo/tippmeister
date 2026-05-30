@@ -1,27 +1,23 @@
-FROM python:3.11-slim
+# Stage 1: Build -- install dependencies using the builder image (has shell + pip)
+FROM registry.access.redhat.com/hi/python:3.13-builder AS builder
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    openssl \
-    && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir --prefix=/tmp/install -r requirements.txt
+
+# Stage 2: Runtime -- distroless, hardened, near-zero CVEs
+FROM registry.access.redhat.com/hi/python:3.13
 
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-COPY . .
-
-RUN pybabel compile -d translations
+COPY --from=builder /tmp/install /usr/local
+COPY . /app
 
 ENV DATA_DIR=/data
 ENV PORT=9443
-
-RUN mkdir -p /data/certs
+VOLUME /data
 
 EXPOSE 9443
 EXPOSE 8080
 
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["python3", "/app/entrypoint.py"]

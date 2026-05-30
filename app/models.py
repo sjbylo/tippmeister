@@ -15,6 +15,9 @@ class User(UserMixin, db.Model):
 	language = db.Column(db.String(5), default='en')
 	is_admin = db.Column(db.Boolean, default=False)
 	created_at = db.Column(db.DateTime, default=datetime.utcnow)
+	email_verified = db.Column(db.Boolean, default=False)
+	verify_token = db.Column(db.String(128), nullable=True, index=True)
+	verify_sent_at = db.Column(db.DateTime, nullable=True)
 
 	predictions = db.relationship('Prediction', backref='user', lazy='dynamic')
 

@@ -6,6 +6,7 @@ from flask_babel import Babel
 from flask_wtf.csrf import CSRFProtect
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from flask_compress import Compress
 from config import Config, data_dir
 
 db = SQLAlchemy()
@@ -14,6 +15,7 @@ login_manager.login_view = 'auth.login'
 babel = Babel()
 csrf = CSRFProtect()
 limiter = Limiter(key_func=get_remote_address, default_limits=[])
+compress = Compress()
 
 
 def get_locale():
@@ -39,10 +41,23 @@ def create_app(config_class=Config):
 	babel.init_app(app, locale_selector=get_locale, timezone_selector=get_timezone)
 	csrf.init_app(app)
 	limiter.init_app(app)
+	compress.init_app(app)
 
 	@app.before_request
 	def make_session_permanent():
 		session.permanent = True
+
+	VERIFY_EXEMPT = {
+		'auth.login', 'auth.logout', 'auth.register',
+		'auth.verify_email', 'auth.verify_pending', 'auth.resend_verification',
+		'static',
+	}
+
+	@app.before_request
+	def require_email_verification():
+		if current_user.is_authenticated and not current_user.email_verified:
+			if request.endpoint not in VERIFY_EXEMPT:
+				return redirect(url_for('auth.verify_pending'))
 
 	from app.models import User
 
@@ -60,6 +75,21 @@ def create_app(config_class=Config):
 	app.jinja_env.globals['get_now'] = get_now
 	app.jinja_env.globals['get_locale'] = get_locale
 
+	@app.template_filter('utc_attr')
+	def utc_attr_filter(dt):
+		return dt.isoformat() if dt else ''
+
+	@app.context_processor
+	def inject_time_warp():
+		from app.models import AppSetting
+		try:
+			setting = db.session.get(AppSetting, 'time_warp')
+			if setting and setting.value:
+				return {'time_warp_value': setting.value}
+		except Exception:
+			pass
+		return {'time_warp_value': ''}
+
 	@app.errorhandler(404)
 	def page_not_found(e):
 		return render_template('errors/404.html'), 404
@@ -73,11 +103,39 @@ def create_app(config_class=Config):
 			db.create_all()
 		except Exception:
 			pass  # race condition with multiple gunicorn workers
+		_migrate_add_verification_columns()
+		_backfill_verified_users()
 		seed_matches_if_empty(app)
 		_apply_demo_schedule(app)
 		_load_persisted_invite_token(app)
 
 	return app
+
+
+def _migrate_add_verification_columns():
+	"""Add email verification columns to existing users table if missing."""
+	try:
+		cols = [row[1] for row in db.session.execute(db.text("PRAGMA table_info(users)")).fetchall()]
+		if 'email_verified' not in cols:
+			db.session.execute(db.text("ALTER TABLE users ADD COLUMN email_verified BOOLEAN DEFAULT 1"))
+			db.session.execute(db.text("ALTER TABLE users ADD COLUMN verify_token VARCHAR(128)"))
+			db.session.execute(db.text("ALTER TABLE users ADD COLUMN verify_sent_at DATETIME"))
+			db.session.commit()
+	except Exception:
+		db.session.rollback()
+
+
+def _backfill_verified_users():
+	"""Mark all existing users as verified (pre-verification-feature users)."""
+	from app.models import User
+	try:
+		updated = User.query.filter_by(email_verified=False).filter(
+			User.verify_token.is_(None)
+		).update({'email_verified': True})
+		if updated:
+			db.session.commit()
+	except Exception:
+		db.session.rollback()
 
 
 def _apply_demo_schedule(app):

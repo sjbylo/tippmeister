@@ -1,4 +1,6 @@
 import re
+import secrets
+from datetime import datetime, timedelta
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_babel import gettext as _
 from flask_login import login_user, logout_user, login_required, current_user
@@ -69,15 +71,23 @@ def register(token):
 		is_admin = email in current_app.config['ADMIN_EMAILS']
 		user = User(email=email, display_name=display_name, is_admin=is_admin)
 		user.set_password(password)
+		user.verify_token = secrets.token_urlsafe(48)
+		user.verify_sent_at = datetime.utcnow()
+
+		detected_tz = request.form.get('timezone', '').strip()
+		if detected_tz:
+			import pytz
+			if detected_tz in pytz.all_timezones:
+				user.timezone = detected_tz
 		db.session.add(user)
 		db.session.commit()
 
-		from app.notifications import send_welcome_email
-		send_welcome_email(user)
+		from app.notifications import send_verification_email
+		send_verification_email(user)
 
 		login_user(user)
-		flash(_("Welcome, %(name)s!", name=display_name), "success")
-		return redirect(url_for('main.matches'))
+		flash(_("A verification email has been sent to %(email)s. Please verify within 24 hours.", email=email), "info")
+		return redirect(url_for('auth.verify_pending'))
 
 	return render_template('register.html', token=token, email='', display_name='')
 
@@ -94,7 +104,15 @@ def login():
 
 		user = User.query.filter_by(email=email).first()
 		if user and user.check_password(password):
+			detected_tz = request.form.get('timezone', '').strip()
+			if detected_tz and not user.timezone:
+				import pytz
+				if detected_tz in pytz.all_timezones:
+					user.timezone = detected_tz
+					db.session.commit()
 			login_user(user, remember=True)
+			if not user.email_verified:
+				return redirect(url_for('auth.verify_pending'))
 			next_page = request.args.get('next', '')
 			if not next_page or not next_page.startswith('/') or next_page.startswith('//'):
 				next_page = url_for('main.matches')
@@ -129,3 +147,83 @@ def profile():
 	import pytz
 	timezones = sorted(pytz.common_timezones)
 	return render_template('profile.html', timezones=timezones)
+
+
+@auth_bp.route('/verify-pending')
+@login_required
+def verify_pending():
+	if current_user.email_verified:
+		return redirect(url_for('main.matches'))
+	return render_template('verify_pending.html')
+
+
+@auth_bp.route('/verify-email/<token>')
+def verify_email(token):
+	user = User.query.filter_by(verify_token=token).first()
+	if not user:
+		flash(_("Invalid verification link."), "error")
+		return redirect(url_for('auth.login'))
+
+	if user.verify_sent_at and (datetime.utcnow() - user.verify_sent_at) > timedelta(hours=24):
+		flash(_("Verification link has expired. Please request a new one."), "error")
+		if current_user.is_authenticated:
+			return redirect(url_for('auth.verify_pending'))
+		return redirect(url_for('auth.login'))
+
+	user.email_verified = True
+	user.verify_token = None
+	db.session.commit()
+
+	from app.notifications import send_welcome_email
+	send_welcome_email(user)
+
+	if not current_user.is_authenticated:
+		login_user(user)
+
+	flash(_("Email verified! Welcome, %(name)s!", name=user.display_name), "success")
+	return redirect(url_for('main.matches'))
+
+
+@auth_bp.route('/resend-verification', methods=['POST'])
+@login_required
+@limiter.limit("3 per hour")
+def resend_verification():
+	if current_user.email_verified:
+		return redirect(url_for('main.matches'))
+
+	current_user.verify_token = secrets.token_urlsafe(48)
+	current_user.verify_sent_at = datetime.utcnow()
+	db.session.commit()
+
+	from app.notifications import send_verification_email
+	send_verification_email(current_user)
+
+	flash(_("Verification email resent to %(email)s.", email=current_user.email), "info")
+	return redirect(url_for('auth.verify_pending'))
+
+
+@auth_bp.route('/change-password', methods=['POST'])
+@login_required
+@limiter.limit("10 per hour")
+def change_password():
+	current_pw = request.form.get('current_password', '')
+	new_pw = request.form.get('new_password', '')
+	confirm_pw = request.form.get('confirm_password', '')
+
+	if not current_user.check_password(current_pw):
+		flash(_("Current password is incorrect."), "error")
+		return redirect(url_for('auth.profile'))
+
+	pwd_err = validate_password(new_pw)
+	if pwd_err:
+		flash(pwd_err, "error")
+		return redirect(url_for('auth.profile'))
+
+	if new_pw != confirm_pw:
+		flash(_("New passwords do not match."), "error")
+		return redirect(url_for('auth.profile'))
+
+	current_user.set_password(new_pw)
+	db.session.commit()
+	flash(_("Password changed successfully."), "success")
+	return redirect(url_for('auth.profile'))

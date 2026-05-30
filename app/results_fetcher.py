@@ -26,8 +26,10 @@ def should_poll(app, now):
 		if not app.config.get('API_FOOTBALL_KEY'):
 			return False
 
-		day_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
-		day_end = now.replace(hour=23, minute=59, second=59)
+		from datetime import timedelta
+		# Wide window (UTC-12 to UTC+14) so no timezone misses a match day
+		day_start = now.replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(hours=14)
+		day_end = now.replace(hour=23, minute=59, second=59) + timedelta(hours=12)
 
 		todays_matches = Match.query.filter(
 			Match.kickoff_utc >= day_start,

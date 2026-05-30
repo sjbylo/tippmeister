@@ -12,6 +12,10 @@
 				<option value="{{ tz }}" {{ 'selected' if tz == current_user.timezone }}>{{ tz }}</option>
 				{% endfor %}
 			</select>
+			<small id="tz-hint" style="display:none; margin-top:0.3rem;">
+				{{ _('Detected:') }} <strong id="tz-detected"></strong>
+				<a href="#" id="tz-use" style="margin-left:0.5rem;">{{ _('Use this') }}</a>
+			</small>
 		</div>
 		<div class="form-group">
 			<label for="language">{{ _('Language') }}</label>
@@ -26,5 +30,49 @@
 		<p><strong>{{ _('Email') }}:</strong> {{ current_user.email }}</p>
 		<p><strong>{{ _('Joined') }}:</strong> {{ current_user.created_at.strftime('%Y-%m-%d') }}</p>
 	</div>
+
+	<hr style="margin: 2rem 0; border-color: var(--border-color);">
+
+	<h3>{{ _('Change Password') }}</h3>
+	<form method="POST" action="{{ url_for('auth.change_password') }}" class="auth-form">
+		<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+		<div class="form-group">
+			<label for="current_password">{{ _('Current Password') }}</label>
+			<input type="password" id="current_password" name="current_password" required autocomplete="current-password">
+		</div>
+		<div class="form-group">
+			<label for="new_password">{{ _('New Password') }}</label>
+			<input type="password" id="new_password" name="new_password" required autocomplete="new-password">
+			<small>{{ _('At least 8 characters, with letters and numbers.') }}</small>
+		</div>
+		<div class="form-group">
+			<label for="confirm_password">{{ _('Confirm New Password') }}</label>
+			<input type="password" id="confirm_password" name="confirm_password" required autocomplete="new-password">
+		</div>
+		<button type="submit" class="btn btn-primary">{{ _('Change Password') }}</button>
+	</form>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+try {
+	var tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+	if (tz) {
+		var sel = document.getElementById('timezone');
+		var hint = document.getElementById('tz-hint');
+		var detected = document.getElementById('tz-detected');
+		var useBtn = document.getElementById('tz-use');
+		detected.textContent = tz;
+		if (sel.value !== tz) {
+			hint.style.display = 'block';
+		}
+		useBtn.addEventListener('click', function(e) {
+			e.preventDefault();
+			sel.value = tz;
+			hint.style.display = 'none';
+		});
+	}
+} catch(e) {}
+</script>
 {% endblock %}

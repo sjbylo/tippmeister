@@ -3,10 +3,13 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	{% if current_user.is_authenticated %}
+	<meta name="csrf-token" content="{{ csrf_token() }}">
+	{% endif %}
 	<title>{% block title %}Der Tippmeister{% endblock %}</title>
 	<link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
-<body{% if current_user.is_authenticated %} data-timezone="{{ current_user.timezone }}"{% endif %}>
+<body{% if current_user.is_authenticated %} data-timezone="{{ current_user.timezone }}"{% if time_warp_value %} data-warp="{{ time_warp_value }}"{% endif %}{% endif %}>
 	<header class="site-header">
 		<div class="header-brand">
 			<a href="{{ url_for('main.matches') }}">
@@ -31,6 +34,10 @@
 		<button class="mobile-menu-btn" onclick="document.querySelector('.header-nav').classList.toggle('open')">&#9776;</button>
 	</header>
 
+	{% if current_user.is_authenticated %}
+	<div class="now-bar" id="now-bar"></div>
+	{% endif %}
+
 	<main class="content">
 		{% with messages = get_flashed_messages(with_categories=true) %}
 		{% if messages %}
@@ -48,6 +55,34 @@
 	<footer class="site-footer">
 		<p>Der Tippmeister &copy; 2026</p>
 	</footer>
+
+	{% if current_user.is_authenticated %}
+	<div id="pred-modal" class="modal" style="display:none">
+		<div class="modal-backdrop" id="modal-backdrop"></div>
+		<div class="modal-content">
+			<h3 id="modal-title"></h3>
+			<div class="modal-match-info" id="modal-info"></div>
+			<div class="pred-input-row">
+				<label class="team-label" id="modal-team1"></label>
+				<input type="number" id="modal-t1" min="0" max="99" class="score-input">
+				<span class="pred-dash">-</span>
+				<input type="number" id="modal-t2" min="0" max="99" class="score-input">
+				<label class="team-label" id="modal-team2"></label>
+			</div>
+			<div class="pen-winner-row" id="modal-pen-row" style="display:none">
+				<label>{{ _('Penalty winner') }}:</label>
+				<select id="modal-pen" class="pen-select">
+					<option value="">{{ _('-- Select --') }}</option>
+				</select>
+			</div>
+			<div class="modal-error" id="modal-error" style="display:none"></div>
+			<div class="modal-actions">
+				<button class="btn btn-primary" id="modal-save">{{ _('Save') }}</button>
+				<button class="btn" id="modal-cancel">{{ _('Cancel') }}</button>
+			</div>
+		</div>
+	</div>
+	{% endif %}
 
 	<script src="{{ url_for('static', filename='js/app.js') }}"></script>
 	{% block scripts %}{% endblock %}

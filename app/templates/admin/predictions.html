@@ -1,19 +1,24 @@
 {% extends "base.html" %}
+{% from "_macros.html" import kickoff_time %}
 {% block title %}{{ _('All Predictions') }} - Der Tippmeister{% endblock %}
 {% block content %}
 <div class="admin-page">
-	<h2>{{ _('All Predictions (Admin View)') }}</h2>
+	<div class="admin-danger-banner">
+		<span class="danger-icon">&#9888;</span> {{ _('ADMIN VIEW — All predictions visible') }} <span class="danger-icon">&#9888;</span>
+	</div>
 	<p><a href="{{ url_for('admin.dashboard') }}">&larr; {{ _('Back to Admin') }}</a></p>
-	<p class="admin-note">{{ _('All predictions are visible here, including before kickoff.') }}</p>
 
 	<div class="filter-tabs">
 		<a href="?filter=today" class="tab {{ 'active' if filter_type in ('today', 'next') }}">{{ _('Today') }}</a>
+		<a href="?filter=3d" class="tab {{ 'active' if filter_type == '3d' }}">{{ _('3 Days') }}</a>
+		<a href="?filter=7d" class="tab {{ 'active' if filter_type == '7d' }}">{{ _('7 Days') }}</a>
 		{% for g in group_names %}
 		<a href="?filter={{ g }}" class="tab {{ 'active' if filter_type == g }}">{{ g }}</a>
 		{% endfor %}
 		{% for r in knockout_rounds %}
 		<a href="?filter={{ r }}" class="tab {{ 'active' if filter_type == r }}">{{ r }}</a>
 		{% endfor %}
+		<a href="?filter=past" class="tab {{ 'active' if filter_type == 'past' }}">{{ _('Past') }}</a>
 		<a href="?filter=all" class="tab {{ 'active' if filter_type == 'all' }}">{{ _('All') }}</a>
 	</div>
 
@@ -23,7 +28,7 @@
 	</div>
 	{% else %}
 	<div class="grid-wrapper">
-		<table class="grid-table">
+		<table class="grid-table" id="pred-grid">
 			<thead>
 				<tr>
 					<th class="sticky-col">#</th>
@@ -36,32 +41,41 @@
 				</tr>
 			</thead>
 			<tbody>
-				{% for match in matches %}
-				{% set match_started = match.kickoff_utc and match.kickoff_utc <= now %}
-				{% set preds = predictions_map.get(match.id, {}) %}
+			{% set ns = namespace(divider_shown=false) %}
+			{% for match in matches %}
+			{% set match_started = match.status == 'finished' or (match.kickoff_utc and match.kickoff_utc <= now) %}
+			{% set kickoff_passed = match.kickoff_utc and match.kickoff_utc <= now %}
+			{% set preds = predictions_map.get(match.id, {}) %}
+			{% if not kickoff_passed and not ns.divider_shown %}
+			{% set ns.divider_shown = true %}
+				<tr class="now-divider"><td colspan="{{ 4 + users|length }}"></td></tr>
+				{% endif %}
 				<tr class="{{ 'row-finished' if match.status == 'finished' }} {{ 'row-live' if match.status == 'live' }}">
 					<td class="sticky-col">{{ match.match_num }}</td>
-					<td class="sticky-col match-cell">
+					<td class="sticky-col match-cell {% if match.is_knockout and not match.has_known_teams %}admin-knockout-link{% endif %}"
+						{% if match.is_knockout and not match.has_known_teams %}onclick="location.href='{{ url_for('admin.knockout') }}'"{% endif %}>
 						<span class="grid-round">{{ match.group_name or match.round }}</span><br>
-						{{ match.team1 }} {{ _('vs') }} {{ match.team2 }}
+						<span class="grid-team">{{ match.team1 }}</span> <span class="grid-vs">{{ _('vs') }}</span> <span class="grid-team">{{ match.team2 }}</span>
 					</td>
-					<td class="sticky-col" data-utc="{{ match.kickoff_utc.isoformat() if match.kickoff_utc else '' }}">
-						{% if match.kickoff_utc %}{{ match.kickoff_utc.strftime('%b %d %H:%M') }}{% endif %}
+					<td class="sticky-col">
+						{{ kickoff_time(match.kickoff_utc) }}
 						{% if not match_started %}<br><span class="badge badge-warn">{{ _('Not started') }}</span>{% endif %}
 					</td>
-					<td class="sticky-col">{{ match.score_display }}</td>
+					<td class="sticky-col clickable-cell" data-m="{{ match.id }}">
+						{{ match.score_display or '—' }}
+					</td>
 					{% for user in users %}
 					{% set pred = preds.get(user.id) %}
-					<td class="pred-cell
+					<td class="pred-cell clickable-cell
 						{% if not match_started and pred and pred.team1_score is not none %}admin-peek{% endif %}
 						{% if match.status == 'finished' and pred %}
 							{% if pred.points_awarded >= 3 %}pts-3{% elif pred.points_awarded >= 1 %}pts-1{% else %}pts-0{% endif %}
-						{% endif %}">
+						{% endif %}" data-u="{{ user.id }}" data-m="{{ match.id }}">
 						{% if pred and pred.team1_score is not none %}
 						{{ pred.team1_score }}-{{ pred.team2_score }}
 						{% if pred.penalty_winner %}<small>P:{{ pred.penalty_winner[:3] }}</small>{% endif %}
 						{% if match.status == 'finished' %}<br><small>{{ pred.points_awarded }}pt</small>{% endif %}
-						{% else %}-{% endif %}
+						{% else %}<span class="no-pred">none</span>{% endif %}
 					</td>
 					{% endfor %}
 				</tr>
@@ -71,4 +85,23 @@
 	</div>
 	{% endif %}
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+var resultsUrl = "{{ url_for('admin.results') }}";
+var editUrl = "{{ url_for('admin.edit_prediction') }}";
+var filterParam = "{{ filter_type }}";
+document.getElementById('pred-grid').addEventListener('click', function(e) {
+	var td = e.target.closest('.clickable-cell');
+	if (!td) return;
+	var mid = td.dataset.m;
+	var uid = td.dataset.u;
+	if (uid && mid) {
+		window.location.href = editUrl + '?user_id=' + uid + '&match_id=' + mid + '&filter=' + filterParam;
+	} else if (mid) {
+		window.location.href = resultsUrl + '#match-' + mid;
+	}
+});
+</script>
 {% endblock %}

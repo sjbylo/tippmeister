@@ -73,3 +73,6 @@ class Config:
 	# CSRF protection (Flask-WTF)
 	WTF_CSRF_ENABLED = True
 	WTF_CSRF_SSL_STRICT = False  # don't require Referer header on HTTPS (self-signed certs strip it)
+
+	# Cache static files for 1 hour in browser
+	SEND_FILE_MAX_AGE_DEFAULT = 3600

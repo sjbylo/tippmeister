@@ -13,7 +13,17 @@
 			<label for="password">{{ _('Password') }}</label>
 			<input type="password" id="password" name="password" required>
 		</div>
+		<input type="hidden" id="detected_tz" name="timezone" value="">
 		<button type="submit" class="btn btn-primary">{{ _('Login') }}</button>
 	</form>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+try {
+	var tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+	if (tz) document.getElementById('detected_tz').value = tz;
+} catch(e) {}
+</script>
 {% endblock %}

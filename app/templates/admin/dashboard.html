@@ -31,7 +31,7 @@
 
 		<div class="admin-card">
 			<h3>{{ _('Invite Link') }}</h3>
-			<p class="invite-url"><code>/register/{{ invite_token }}</code></p>
+			<p class="invite-url"><code>{{ config.SITE_URL }}/register/{{ invite_token }}</code></p>
 		<form method="POST" action="{{ url_for('admin.regenerate_invite') }}" style="display:inline">
 			<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 			<button type="submit" class="btn btn-sm">{{ _('Regenerate') }}</button>
@@ -60,6 +60,7 @@
 		<a href="{{ url_for('admin.results') }}" class="btn btn-primary">{{ _('Enter Results') }}</a>
 		<a href="{{ url_for('admin.knockout') }}" class="btn btn-primary">{{ _('Manage Knockout Teams') }}</a>
 		<a href="{{ url_for('admin.all_predictions') }}" class="btn btn-primary">{{ _('View All Predictions') }}</a>
+		<a href="{{ url_for('admin.users') }}" class="btn btn-primary">{{ _('Manage Users') }}</a>
 	</div>
 </div>
 {% endblock %}

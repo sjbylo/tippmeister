@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_macros.html" import kickoff_time %}
 {% block title %}{{ _('Enter Results') }} - Der Tippmeister{% endblock %}
 {% block content %}
 <div class="admin-page">
@@ -7,14 +8,15 @@
 
 	<div class="results-list">
 		{% for match in matches %}
-		<div class="result-card {{ 'result-finished' if match.status == 'finished' }}">
-			<div class="result-header">
-				<span class="match-num">{{ _('Match') }} {{ match.match_num }}</span>
-				<span class="result-round">{{ match.group_name or match.round }}</span>
-				{% if match.status == 'finished' %}
-				<span class="badge badge-finished">{{ match.result_source|upper }}</span>
-				{% endif %}
-			</div>
+		<div class="result-card {{ 'result-finished' if match.status == 'finished' }}" id="match-{{ match.id }}">
+		<div class="result-header">
+			<span class="match-num">{{ _('Match') }} {{ match.match_num }}</span>
+			<span class="result-round">{{ match.group_name or match.round }}</span>
+			{{ kickoff_time(match.kickoff_utc, "result-time") }}
+			{% if match.status == 'finished' %}
+			<span class="badge badge-finished">{{ match.result_source|upper }}</span>
+			{% endif %}
+		</div>
 			<div class="result-teams">
 				<strong>{{ match.team1 }}</strong> {{ _('vs') }} <strong>{{ match.team2 }}</strong>
 			</div>
@@ -79,9 +81,17 @@
 				</details>
 				{% endif %}
 
-				<button type="submit" class="btn btn-sm btn-primary">{{ _('Save Result') }}</button>
-			</form>
-		</div>
+			<button type="submit" class="btn btn-sm btn-primary">{{ _('Save Result') }}</button>
+		</form>
+		{% if match.status == 'finished' %}
+		<form method="POST" action="{{ url_for('admin.clear_result') }}" style="margin-top: 0.5rem;"
+			  onsubmit="return confirm('{{ _('Clear result for Match %(num)d? Points will be reset to 0.', num=match.match_num) }}')">
+			<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+			<input type="hidden" name="match_id" value="{{ match.id }}">
+			<button type="submit" class="btn btn-sm btn-danger">{{ _('Clear Result') }}</button>
+		</form>
+		{% endif %}
+	</div>
 		{% endfor %}
 	</div>
 </div>

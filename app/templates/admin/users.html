@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Manage Users') }} - Der Tippmeister{% endblock %}
+{% block content %}
+<div class="admin-page">
+	<h2>{{ _('Manage Users') }}</h2>
+	<p><a href="{{ url_for('admin.dashboard') }}">&larr; {{ _('Back to Admin') }}</a></p>
+
+	<table class="grid-table users-table">
+		<thead>
+			<tr>
+				<th>ID</th>
+				<th>{{ _('Name') }}</th>
+				<th>{{ _('Email') }}</th>
+				<th>{{ _('Timezone') }}</th>
+				<th>{{ _('Admin') }}</th>
+				<th>{{ _('Joined') }}</th>
+				<th></th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for user in users %}
+			<tr>
+				<td>{{ user.id }}</td>
+				<td>{{ user.display_name }}</td>
+				<td>{{ user.email }}</td>
+				<td>{{ user.timezone or '—' }}</td>
+				<td>{{ '✓' if user.is_admin else '' }}</td>
+				<td>{{ user.created_at.strftime('%Y-%m-%d') if user.created_at else '—' }}</td>
+				<td class="user-actions">
+				<a href="{{ url_for('admin.edit_user', user_id=user.id) }}" class="btn btn-sm">{{ _('Edit') }}</a>
+				{% if user.id != current_user.id %}
+				<form method="POST" action="{{ url_for('admin.edit_user', user_id=user.id) }}" style="display:inline"
+					  onsubmit="return confirm('{{ _('Delete user %(name)s and all their predictions?', name=user.display_name) }}')">
+					<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+					<input type="hidden" name="action" value="delete">
+					<button type="submit" class="btn btn-sm btn-danger">{{ _('Delete') }}</button>
+				</form>
+				{% endif %}
+			</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+	<p><strong>{{ users|length }}</strong> {{ _('users total') }}</p>
+</div>
+{% endblock %}

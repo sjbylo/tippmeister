@@ -3,7 +3,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Der Tippmeister 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-27 21:57+0800\n"
+"POT-Creation-Date: 2026-05-27 22:44+0800\n"
 "PO-Revision-Date: 2026-05-27 22:00+0800\n"
 "Last-Translator: \n"
 "Language: de\n"
@@ -18,11 +18,11 @@ msgstr ""
 msgid "Admin access required."
 msgstr "Admin-Zugang erforderlich."
 
-#: app/admin.py:68 app/admin.py:178
+#: app/admin.py:68 app/admin.py:178 app/admin.py:257
 msgid "Match not found."
 msgstr "Spiel nicht gefunden."
 
-#: app/admin.py:75
+#: app/admin.py:75 app/admin.py:277
 msgid "Please enter valid scores."
 msgstr "Bitte gültige Ergebnisse eingeben."
 
@@ -70,6 +70,15 @@ msgstr "fortgesetzt"
 #, python-format
 msgid "Auto-fetch %(state)s."
 msgstr "Auto-Abruf %(state)s."
+
+#: app/admin.py:270
+msgid "Prediction deleted."
+msgstr "Tipp gelöscht."
+
+#: app/admin.py:298
+#, python-format
+msgid "Prediction updated for %(user)s."
+msgstr "Tipp für %(user)s aktualisiert."
 
 #: app/auth.py:15
 #, python-format
@@ -128,7 +137,9 @@ msgstr "Profil aktualisiert."
 #: app/main.py:195
 #, python-format
 msgid "Match %(num)d: draw in knockout requires a penalty winner."
-msgstr "Spiel %(num)d: Unentschieden in der K.o.-Runde erfordert einen Elfmeter-Gewinner."
+msgstr ""
+"Spiel %(num)d: Unentschieden in der K.o.-Runde erfordert einen Elfmeter-"
+"Gewinner."
 
 #: app/main.py:203
 #, python-format
@@ -170,18 +181,27 @@ msgstr "Abmelden"
 msgid "Grid View"
 msgstr "Tabellenansicht"
 
-#: app/templates/grid.html:6 app/templates/matches.html:6
-#: app/templates/admin/predictions.html:10
+#: app/templates/admin/predictions.html:10 app/templates/grid.html:6
+#: app/templates/matches.html:6
 msgid "Today"
 msgstr "Heute"
 
-#: app/templates/grid.html:13 app/templates/matches.html:13
-#: app/templates/leaderboard.html:11 app/templates/admin/predictions.html:17
+#: app/templates/admin/predictions.html:17 app/templates/grid.html:13
+#: app/templates/leaderboard.html:11 app/templates/matches.html:13
+msgid "3 Days"
+msgstr "3 Tage"
+
+msgid "7 Days"
+msgstr "7 Tage"
+
+msgid "Past"
+msgstr "Vergangen"
+
 msgid "All"
 msgstr "Alle"
 
-#: app/templates/grid.html:18 app/templates/matches.html:18
-#: app/templates/admin/predictions.html:22
+#: app/templates/admin/predictions.html:22 app/templates/grid.html:18
+#: app/templates/matches.html:18
 msgid "No matches found for this filter."
 msgstr "Keine Spiele für diesen Filter gefunden."
 
@@ -197,8 +217,9 @@ msgstr "Zur Kartenansicht wechseln"
 msgid "for mobile."
 msgstr "für Mobilgeräte."
 
-#: app/templates/grid.html:31 app/templates/admin/knockout.html:13
-#: app/templates/admin/predictions.html:30 app/templates/admin/results.html:12
+#: app/templates/admin/edit_prediction.html:10
+#: app/templates/admin/knockout.html:13 app/templates/admin/predictions.html:30
+#: app/templates/admin/results.html:12 app/templates/grid.html:31
 msgid "Match"
 msgstr "Spiel"
 
@@ -206,14 +227,15 @@ msgstr "Spiel"
 msgid "Time"
 msgstr "Zeit"
 
-#: app/templates/grid.html:33 app/templates/admin/predictions.html:32
+#: app/templates/admin/predictions.html:32 app/templates/grid.html:33
 #: app/templates/rules.html:22
 msgid "Result"
 msgstr "Ergebnis"
 
-#: app/templates/grid.html:47 app/templates/matches.html:42
+#: app/templates/admin/edit_prediction.html:10
 #: app/templates/admin/knockout.html:24 app/templates/admin/predictions.html:46
-#: app/templates/admin/results.html:19
+#: app/templates/admin/results.html:19 app/templates/grid.html:47
+#: app/templates/matches.html:43
 msgid "vs"
 msgstr "gegen"
 
@@ -255,11 +277,11 @@ msgstr "E-Mail"
 msgid "Password"
 msgstr "Passwort"
 
-#: app/templates/matches.html:31
+#: app/templates/matches.html:32
 msgid "LIVE"
 msgstr "LIVE"
 
-#: app/templates/matches.html:33
+#: app/templates/matches.html:34
 msgid "FT"
 msgstr "Ende"
 
@@ -267,10 +289,12 @@ msgstr "Ende"
 msgid "No upcoming matches with known teams to predict."
 msgstr "Keine kommenden Spiele mit bekannten Teams zum Tippen."
 
+#: app/templates/admin/edit_prediction.html:41
 #: app/templates/predictions.html:38
 msgid "Penalty winner"
 msgstr "Elfmeter-Gewinner"
 
+#: app/templates/admin/edit_prediction.html:43
 #: app/templates/predictions.html:40
 msgid "-- Select --"
 msgstr "-- Auswählen --"
@@ -304,7 +328,7 @@ msgstr "Englisch"
 msgid "German"
 msgstr "Deutsch"
 
-#: app/templates/profile.html:23
+#: app/templates/admin/edit_prediction.html:51 app/templates/profile.html:23
 msgid "Save"
 msgstr "Speichern"
 
@@ -350,27 +374,27 @@ msgstr "So funktioniert's"
 
 #: app/templates/rules.html:10
 msgid "Predict the final score for each match <strong>before kickoff</strong>."
-msgstr "Sage das Endergebnis jedes Spiels <strong>vor Anpfiff</strong> voraus."
+msgstr "Tippe <strong>vor dem Anpfiff</strong> das Endergebnis jedes Spiels."
 
 #: app/templates/rules.html:11
 msgid ""
 "For knockout matches, if you predict a draw, you must also pick the "
 "<strong>penalty shootout winner</strong>."
 msgstr ""
-"Bei K.o.-Spielen musst du bei einem Unentschieden auch den "
-"<strong>Elfmeterschießen-Gewinner</strong> wählen."
+"Bei K.-o.-Spielen musst du, wenn du auf ein Unentschieden tippst, "
+"zusätzlich den <strong>Sieger des Elfmeterschießens</strong> auswählen."
 
 #: app/templates/rules.html:12
 msgid ""
 "Once a match kicks off, your prediction is <strong>locked</strong> and "
 "visible to other players."
 msgstr ""
-"Nach Anpfiff wird dein Tipp <strong>gesperrt</strong> und für andere "
-"Spieler sichtbar."
+"Sobald ein Spiel angepfiffen wurde, ist dein Tipp <strong>gesperrt</strong> "
+"und für andere Spieler sichtbar."
 
 #: app/templates/rules.html:13
-msgid "Points are awarded automatically when results are entered."
-msgstr "Punkte werden automatisch vergeben, wenn Ergebnisse eingetragen werden."
+msgid "Points are awarded automatically once match results are entered."
+msgstr "Punkte werden automatisch vergeben, sobald die Endergebnisse feststehen."
 
 #: app/templates/rules.html:18
 msgid "Scoring"
@@ -386,59 +410,59 @@ msgstr "Richtiger Sieger"
 
 #: app/templates/rules.html:30 app/templates/rules.html:40
 msgid "1 pt"
-msgstr "1 Pkt"
+msgstr "1 Punkt"
 
 #: app/templates/rules.html:31
 msgid "Match: 2-0 — You predicted: 1-0"
-msgstr "Spiel: 2-0 — Dein Tipp: 1-0"
+msgstr "Spiel: 2:0 — Dein Tipp: 1:0"
 
 #: app/templates/rules.html:34
 msgid "Exact score"
-msgstr "Genaues Ergebnis"
+msgstr "Exaktes Ergebnis"
 
 #: app/templates/rules.html:35 app/templates/rules.html:45
 msgid "3 pts"
-msgstr "3 Pkt"
+msgstr "3 Punkte"
 
 #: app/templates/rules.html:36
 msgid "Match: 2-1 — You predicted: 2-1"
-msgstr "Spiel: 2-1 — Dein Tipp: 2-1"
+msgstr "Spiel: 2:1 — Dein Tipp: 2:1"
 
 #: app/templates/rules.html:39
-msgid "Correct draw"
+msgid "Correctly predicted draw"
 msgstr "Richtiges Unentschieden"
 
 #: app/templates/rules.html:41
 msgid "Match: 1-1 — You predicted: 0-0"
-msgstr "Spiel: 1-1 — Dein Tipp: 0-0"
+msgstr "Spiel: 1:1 — Dein Tipp: 0:0"
 
 #: app/templates/rules.html:44
-msgid "Exact draw"
-msgstr "Genaues Unentschieden"
+msgid "Exact draw predicted"
+msgstr "Exaktes Unentschieden"
 
 #: app/templates/rules.html:46
 msgid "Match: 1-1 — You predicted: 1-1"
-msgstr "Spiel: 1-1 — Dein Tipp: 1-1"
+msgstr "Spiel: 1:1 — Dein Tipp: 1:1"
 
 #: app/templates/rules.html:49
 msgid "Penalty winner bonus (knockout only)"
-msgstr "Elfmeter-Gewinner-Bonus (nur K.o.-Runde)"
+msgstr "Bonus für richtigen Elfmetersieger (nur K.-o.-Spiele)"
 
 #: app/templates/rules.html:50
 msgid "+1 pt"
-msgstr "+1 Pkt"
+msgstr "+1 Punkt"
 
 #: app/templates/rules.html:51
 msgid "You correctly predicted who advances on penalties"
-msgstr "Du hast richtig getippt, wer im Elfmeterschießen weiterkommt"
+msgstr "Du hast korrekt vorhergesagt, wer im Elfmeterschießen weiterkommt"
 
 #: app/templates/rules.html:55
 msgid "Maximum per match: 4 points"
-msgstr "Maximum pro Spiel: 4 Punkte"
+msgstr "Maximal pro Spiel: 4 Punkte"
 
 #: app/templates/rules.html:55
 msgid "(exact draw + penalty bonus in knockout)"
-msgstr "(genaues Unentschieden + Elfmeter-Bonus in der K.o.-Runde)"
+msgstr "(exaktes Unentschieden + Bonus für Elfmetersieger im K.-o.-Spiel)"
 
 #: app/templates/rules.html:59
 msgid "Which Score Counts?"
@@ -450,41 +474,54 @@ msgstr "Gruppenphase:"
 
 #: app/templates/rules.html:61
 msgid "Full-time score (90 minutes)."
-msgstr "Endergebnis (90 Minuten)."
+msgstr "Das Ergebnis nach 90 Minuten."
 
 #: app/templates/rules.html:62
 msgid "Knockout stage:"
-msgstr "K.o.-Runde:"
+msgstr "K.-o.-Phase:"
 
 #: app/templates/rules.html:62
 msgid ""
-"After Extra Time (AET) score if extra time was played, otherwise the "
+"Score after extra time (AET) if extra time was played, otherwise the "
 "90-minute score. The penalty shootout determines who advances but does "
 "not change the match score."
 msgstr ""
-"Ergebnis nach Verlängerung (n.V.), falls Verlängerung gespielt wurde, "
-"ansonsten das 90-Minuten-Ergebnis. Das Elfmeterschießen bestimmt, wer "
-"weiterkommt, ändert aber nicht das Spielergebnis."
+"Das Ergebnis nach Verlängerung (n. V.), falls eine Verlängerung gespielt "
+"wurde, ansonsten das Ergebnis nach 90 Minuten. Das Elfmeterschießen "
+"entscheidet nur darüber, wer weiterkommt, verändert aber nicht das "
+"Spielergebnis."
 
 #: app/templates/rules.html:67
+msgid "Past Results"
+msgstr "Vergangene Ergebnisse"
+
+msgid "Pending"
+msgstr "Ausstehend"
+
+msgid "My prediction:"
+msgstr "Mein Tipp:"
+
+msgid "No prediction"
+msgstr "Kein Tipp"
+
 msgid "Important"
 msgstr "Wichtig"
 
 #: app/templates/rules.html:69
 msgid "Predictions must be submitted <strong>before the match kicks off</strong>."
-msgstr "Tipps müssen <strong>vor Anpfiff</strong> abgegeben werden."
+msgstr "Tipps müssen <strong>vor dem Anpfiff</strong> abgegeben werden."
 
 #: app/templates/rules.html:70
 msgid "You can update your predictions as many times as you want before kickoff."
-msgstr "Du kannst deine Tipps vor Anpfiff beliebig oft ändern."
+msgstr "Du kannst deine Tipps beliebig oft ändern, solange das Spiel noch nicht begonnen hat."
 
 #: app/templates/rules.html:71
 msgid "Other players' predictions are <strong>hidden until kickoff</strong>."
-msgstr "Tipps anderer Spieler sind <strong>bis zum Anpfiff verborgen</strong>."
+msgstr "Die Tipps anderer Spieler bleiben <strong>bis zum Anpfiff verborgen</strong>."
 
 #: app/templates/rules.html:72
 msgid "The leaderboard updates in real time as results come in."
-msgstr "Die Rangliste wird in Echtzeit aktualisiert, wenn Ergebnisse eintreffen."
+msgstr "Die Rangliste wird in Echtzeit aktualisiert, sobald Ergebnisse eingehen."
 
 #: app/templates/admin/dashboard.html:5
 msgid "Admin Dashboard"
@@ -594,6 +631,43 @@ msgstr "K.o.-Teams verwalten"
 msgid "View All Predictions"
 msgstr "Alle Tipps anzeigen"
 
+#: app/templates/admin/edit_prediction.html:2
+#: app/templates/admin/edit_prediction.html:5
+msgid "Edit Prediction"
+msgstr "Tipp bearbeiten"
+
+#: app/templates/admin/edit_prediction.html:6
+msgid "Back to All Predictions"
+msgstr "Zurück zu Alle Tipps"
+
+#: app/templates/admin/edit_prediction.html:11
+msgid "Round:"
+msgstr "Runde:"
+
+#: app/templates/admin/edit_prediction.html:13
+msgid "Kickoff:"
+msgstr "Anpfiff:"
+
+#: app/templates/admin/edit_prediction.html:16
+msgid "Result:"
+msgstr "Ergebnis:"
+
+#: app/templates/admin/edit_prediction.html:18
+msgid "Player:"
+msgstr "Spieler:"
+
+#: app/templates/admin/edit_prediction.html:52
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#: app/templates/admin/edit_prediction.html:55
+msgid "Leave both scores empty and save to delete the prediction."
+msgstr "Beide Ergebnisse leer lassen und speichern, um den Tipp zu löschen."
+
+#: app/templates/admin/edit_prediction.html:60
+msgid "Current points:"
+msgstr "Aktuelle Punkte:"
+
 #: app/templates/admin/knockout.html:2
 msgid "Knockout Teams"
 msgstr "K.o.-Teams"
@@ -642,6 +716,16 @@ msgstr "Anpfiff"
 #: app/templates/admin/predictions.html:50
 msgid "Not started"
 msgstr "Noch nicht begonnen"
+
+#: app/templates/admin/predictions.html:53
+#, fuzzy
+msgid "Edit result"
+msgstr "Ergebnis bearbeiten"
+
+#: app/templates/admin/predictions.html:64
+#, python-format
+msgid "Edit prediction for %(name)s"
+msgstr "Tipp von %(name)s bearbeiten"
 
 #: app/templates/admin/results.html:5
 msgid "Enter / Edit Match Results"
@@ -694,3 +778,65 @@ msgstr "500 — Serverfehler"
 #: app/templates/errors/500.html:6
 msgid "Something went wrong. Please try again later."
 msgstr "Etwas ist schiefgelaufen. Bitte versuche es später erneut."
+
+#: app/auth.py (change_password)
+msgid "Current password is incorrect."
+msgstr "Das aktuelle Passwort ist falsch."
+
+msgid "New passwords do not match."
+msgstr "Die neuen Passwörter stimmen nicht überein."
+
+msgid "Password changed successfully."
+msgstr "Passwort erfolgreich geändert."
+
+#: app/templates/profile.html (change password section)
+msgid "Change Password"
+msgstr "Passwort ändern"
+
+msgid "Current Password"
+msgstr "Aktuelles Passwort"
+
+msgid "New Password"
+msgstr "Neues Passwort"
+
+msgid "At least 8 characters, with letters and numbers."
+msgstr "Mindestens 8 Zeichen, mit Buchstaben und Zahlen."
+
+msgid "Confirm New Password"
+msgstr "Neues Passwort bestätigen"
+
+#: app/auth.py (email verification)
+msgid "A verification email has been sent to %(email)s. Please verify within 24 hours."
+msgstr "Eine Bestätigungsmail wurde an %(email)s gesendet. Bitte bestätige innerhalb von 24 Stunden."
+
+msgid "Invalid verification link."
+msgstr "Ungültiger Bestätigungslink."
+
+msgid "Verification link has expired. Please request a new one."
+msgstr "Der Bestätigungslink ist abgelaufen. Bitte fordere einen neuen an."
+
+msgid "Email verified! Welcome, %(name)s!"
+msgstr "E-Mail bestätigt! Willkommen, %(name)s!"
+
+msgid "Verification email resent to %(email)s."
+msgstr "Bestätigungsmail erneut an %(email)s gesendet."
+
+#: app/templates/verify_pending.html
+msgid "Verify Email"
+msgstr "E-Mail bestätigen"
+
+msgid "Check your inbox"
+msgstr "Prüfe deinen Posteingang"
+
+msgid "A verification email was sent to:"
+msgstr "Eine Bestätigungsmail wurde gesendet an:"
+
+msgid "Please click the link in the email to verify your account. The link expires in 24 hours."
+msgstr "Bitte klicke auf den Link in der E-Mail, um dein Konto zu bestätigen. Der Link läuft in 24 Stunden ab."
+
+msgid "Didn't receive the email?"
+msgstr "Keine E-Mail erhalten?"
+
+msgid "Resend verification email"
+msgstr "Bestätigungsmail erneut senden"
+

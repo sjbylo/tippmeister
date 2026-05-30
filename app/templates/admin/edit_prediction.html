@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% from "_macros.html" import kickoff_time %}
+{% block title %}{{ _('Edit Prediction') }} - Der Tippmeister{% endblock %}
+{% block content %}
+<div class="admin-page">
+	<h2>{{ _('Edit Prediction') }}</h2>
+	<p><a href="{{ url_for('admin.all_predictions', filter=request.args.get('filter', 'all')) }}">&larr; {{ _('Back to All Predictions') }}</a></p>
+
+	<div class="edit-pred-card">
+		<div class="edit-pred-info">
+			<p><strong>{{ _('Match') }} {{ match.match_num }}:</strong> {{ match.team1 }} {{ _('vs') }} {{ match.team2 }}</p>
+			<p><strong>{{ _('Round:') }}</strong> {{ match.group_name or match.round }}</p>
+			{% if match.kickoff_utc %}
+			<p><strong>{{ _('Kickoff:') }}</strong> {{ kickoff_time(match.kickoff_utc) }}</p>
+			{% endif %}
+			{% if match.status == 'finished' %}
+			<p><strong>{{ _('Result:') }}</strong> {{ match.score_display }}</p>
+			{% endif %}
+			<p><strong>{{ _('Player:') }}</strong> {{ user.display_name }} ({{ user.email }})</p>
+		</div>
+
+		<form method="POST" action="{{ url_for('admin.edit_prediction', user_id=user.id, match_id=match.id, filter=request.args.get('filter', 'all')) }}" class="edit-pred-form">
+			<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+			<input type="hidden" name="user_id" value="{{ user.id }}">
+			<input type="hidden" name="match_id" value="{{ match.id }}">
+
+			<div class="pred-input-row">
+				<label class="team-label">{{ match.team1 }}</label>
+				<input type="number" name="team1_score" min="0" max="99"
+					   value="{{ pred.team1_score if pred and pred.team1_score is not none else '' }}"
+					   class="score-input" id="t1">
+				<span class="pred-dash">-</span>
+				<input type="number" name="team2_score" min="0" max="99"
+					   value="{{ pred.team2_score if pred and pred.team2_score is not none else '' }}"
+					   class="score-input" id="t2">
+				<label class="team-label">{{ match.team2 }}</label>
+			</div>
+
+			{% if match.is_knockout %}
+			<div class="pen-winner-row" id="pen_row"
+				 style="display: {% if pred and pred.team1_score is not none and pred.team1_score == pred.team2_score %}flex{% else %}none{% endif %}">
+				<label>{{ _('Penalty winner') }}:</label>
+				<select name="penalty_winner" class="pen-select">
+					<option value="">{{ _('-- Select --') }}</option>
+					<option value="{{ match.team1 }}" {{ 'selected' if pred and pred.penalty_winner == match.team1 }}>{{ match.team1 }}</option>
+					<option value="{{ match.team2 }}" {{ 'selected' if pred and pred.penalty_winner == match.team2 }}>{{ match.team2 }}</option>
+				</select>
+			</div>
+			{% endif %}
+
+			<div class="form-actions">
+				<button type="submit" class="btn btn-primary">{{ _('Save') }}</button>
+				<a href="{{ url_for('admin.all_predictions', filter=request.args.get('filter', 'all')) }}" class="btn">{{ _('Cancel') }}</a>
+			</div>
+
+			<p class="edit-pred-hint">{{ _('Leave both scores empty and save to delete the prediction.') }}</p>
+		</form>
+
+		{% if pred and pred.points_awarded %}
+		<div class="edit-pred-points">
+			<p><strong>{{ _('Current points:') }}</strong> {{ pred.points_awarded }}</p>
+		</div>
+		{% endif %}
+	</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+var t1 = document.getElementById('t1');
+var t2 = document.getElementById('t2');
+var penRow = document.getElementById('pen_row');
+if (t1 && t2 && penRow) {
+	function checkDraw() {
+		if (t1.value !== '' && t2.value !== '' && parseInt(t1.value) === parseInt(t2.value)) {
+			penRow.style.display = 'flex';
+		} else {
+			penRow.style.display = 'none';
+		}
+	}
+	t1.addEventListener('input', checkDraw);
+	t2.addEventListener('input', checkDraw);
+}
+</script>
+{% endblock %}

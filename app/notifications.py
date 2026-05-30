@@ -37,7 +37,7 @@ def send_email(to_email, subject, body_html, body_text=None):
 	msg.attach(MIMEText(body_html, 'html'))
 
 	try:
-		with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+		with smtplib.SMTP_SSL('smtp.gmail.com', 465, timeout=10) as server:
 			server.login(gmail_user, gmail_password)
 			server.send_message(msg)
 		log.info(f"Email sent to {to_email}: {subject}")
@@ -45,6 +45,21 @@ def send_email(to_email, subject, body_html, body_text=None):
 	except Exception as e:
 		log.error(f"Failed to send email to {to_email}: {e}")
 		return False
+
+
+def send_verification_email(user):
+	url = _site_url()
+	verify_link = f"{url}/verify-email/{user.verify_token}"
+	subject = "Der Tippmeister: Verify your email"
+	body_html = f"""
+	<h2>Welcome, {user.display_name}!</h2>
+	<p>Please verify your email address to start playing.</p>
+	<p><a href="{verify_link}" style="color:#00a651;font-weight:bold;font-size:1.2em">Verify my email</a></p>
+	<p style="color:#888;font-size:0.9em">This link expires in 24 hours.</p>
+	<p><em>Der Tippmeister</em></p>
+	"""
+	body_text = f"Welcome, {user.display_name}!\n\nVerify your email: {verify_link}\n\nThis link expires in 24 hours."
+	return send_email(user.email, subject, body_html, body_text)
 
 
 def send_welcome_email(user):
@@ -93,14 +108,14 @@ def send_daily_reminders(app):
 
 	with app.app_context():
 		now = get_now()
-		tomorrow_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
 		from datetime import timedelta
-		tomorrow_start = tomorrow_start + timedelta(days=1)
-		tomorrow_end = tomorrow_start + timedelta(hours=23, minutes=59, seconds=59)
+		# Look ahead 12-36 hours to cover all timezones
+		window_start = now + timedelta(hours=12)
+		window_end = now + timedelta(hours=36)
 
 		upcoming = Match.query.filter(
-			Match.kickoff_utc >= tomorrow_start,
-			Match.kickoff_utc <= tomorrow_end,
+			Match.kickoff_utc >= window_start,
+			Match.kickoff_utc <= window_end,
 			Match.status == 'scheduled',
 		).all()
 
@@ -108,9 +123,9 @@ def send_daily_reminders(app):
 			return
 
 		match_ids = [m.id for m in upcoming]
-		date_str = tomorrow_start.strftime('%B %d, %Y')
+		date_str = (now + timedelta(days=1)).strftime('%B %d, %Y')
 
-		users = User.query.all()
+		users = User.query.filter_by(email_verified=True).all()
 		for user in users:
 			predicted = Prediction.query.filter(
 				Prediction.user_id == user.id,

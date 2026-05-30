@@ -1,0 +1,5 @@
+{% macro kickoff_time(dt, css_class="") -%}
+<span class="{{ css_class }}" data-utc="{{ dt|utc_attr }}">
+{%- if dt %}{{ dt.strftime('%b %d, %H:%M') }}{% endif -%}
+</span>
+{%- endmacro %}

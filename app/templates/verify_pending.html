@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}{{ _('Verify Email') }} - Der Tippmeister{% endblock %}
+{% block content %}
+<div class="auth-container">
+	<h2>{{ _('Check your inbox') }}</h2>
+	<p>{{ _('A verification email was sent to:') }}</p>
+	<p><strong>{{ current_user.email }}</strong></p>
+	<p>{{ _('Please click the link in the email to verify your account. The link expires in 24 hours.') }}</p>
+
+	<hr style="margin: 1.5rem 0; border-color: var(--border-color);">
+
+	<p>{{ _("Didn't receive the email?") }}</p>
+	<form method="POST" action="{{ url_for('auth.resend_verification') }}" style="display:inline;">
+		<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+		<button type="submit" class="btn btn-primary">{{ _('Resend verification email') }}</button>
+	</form>
+
+	<p style="margin-top: 1.5rem;">
+		<a href="{{ url_for('auth.logout') }}">{{ _('Logout') }}</a>
+	</p>
+</div>
+{% endblock %}

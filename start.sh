@@ -6,15 +6,15 @@ IMAGE_NAME="${IMAGE_NAME:-tippmeister}"
 CONTAINER_NAME="${CONTAINER_NAME:-tippmeister}"
 PORT="${PORT:-9443}"
 
-# --- Configure these before first run ---
-ADMIN_EMAILS="admin@example.com"                    # comma-separated admin email(s)
-INVITE_TOKEN="change-me-to-a-random-string"           # registration invite URL token
-GMAIL_USER=""                                         # Gmail/Workspace account that authenticates
-GMAIL_APP_PASSWORD=""                                 # Gmail App Password (not your regular password)
-GMAIL_FROM=""                                         # optional: "From" address (e.g. Google Group alias)
-SITE_URL="https://localhost:9443"                     # public URL for links in emails
-# API_FOOTBALL_KEY="your-api-key"         # API-Football key for auto results (optional)
-# -----------------------------------------
+# --- Load configuration from ~/.tm.conf ---
+TM_CONF="${TM_CONF:-$HOME/.tm.conf}"
+if [ -f "$TM_CONF" ]; then
+	. "$TM_CONF"
+else
+	echo "ERROR: Config file not found: $TM_CONF"
+	echo "Create it with: ADMIN_EMAILS, INVITE_TOKEN, GMAIL_USER, GMAIL_APP_PASSWORD, SITE_URL"
+	exit 1
+fi
 
 # Build if image doesn't exist
 if ! podman image exists "$IMAGE_NAME"; then

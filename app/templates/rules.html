@@ -10,7 +10,7 @@
 			<li>{{ _('Predict the final score for each match <strong>before kickoff</strong>.') }}</li>
 			<li>{{ _('For knockout matches, if you predict a draw, you must also pick the <strong>penalty shootout winner</strong>.') }}</li>
 			<li>{{ _('Once a match kicks off, your prediction is <strong>locked</strong> and visible to other players.') }}</li>
-			<li>{{ _('Points are awarded automatically when results are entered.') }}</li>
+			<li>{{ _('Points are awarded automatically once match results are entered.') }}</li>
 		</ol>
 	</div>
 
@@ -36,12 +36,12 @@
 					<td>{{ _('Match: 2-1 — You predicted: 2-1') }}</td>
 				</tr>
 				<tr>
-					<td><strong>{{ _('Correct draw') }}</strong></td>
+					<td><strong>{{ _('Correctly predicted draw') }}</strong></td>
 					<td class="pts">{{ _('1 pt') }}</td>
 					<td>{{ _('Match: 1-1 — You predicted: 0-0') }}</td>
 				</tr>
 				<tr>
-					<td><strong>{{ _('Exact draw') }}</strong></td>
+					<td><strong>{{ _('Exact draw predicted') }}</strong></td>
 					<td class="pts">{{ _('3 pts') }}</td>
 					<td>{{ _('Match: 1-1 — You predicted: 1-1') }}</td>
 				</tr>
@@ -59,7 +59,7 @@
 		<h3>{{ _('Which Score Counts?') }}</h3>
 		<ul>
 			<li><strong>{{ _('Group stage:') }}</strong> {{ _('Full-time score (90 minutes).') }}</li>
-			<li><strong>{{ _('Knockout stage:') }}</strong> {{ _('After Extra Time (AET) score if extra time was played, otherwise the 90-minute score. The penalty shootout determines who advances but does not change the match score.') }}</li>
+			<li><strong>{{ _('Knockout stage:') }}</strong> {{ _('Score after extra time (AET) if extra time was played, otherwise the 90-minute score. The penalty shootout determines who advances but does not change the match score.') }}</li>
 		</ul>
 	</div>
 
