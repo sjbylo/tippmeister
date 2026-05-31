@@ -36,7 +36,7 @@ podman run -d \
 	--name "$CONTAINER_NAME" \
 	-p "${PORT}:${PORT}" \
 	-p "${HTTP_PORT}:8080" \
-	-v tippmeister-data:/data \
+	-v tippmeister-data:/data:Z \
 	-e PORT="$PORT" \
 	-e SECRET_KEY="${SECRET_KEY:-}" \
 	-e INVITE_TOKEN="${INVITE_TOKEN:-}" \
