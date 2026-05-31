@@ -25,7 +25,7 @@ fi
 # Stop existing container if running
 if podman container exists "$CONTAINER_NAME" 2>/dev/null; then
 	echo "Stopping existing container..."
-	podman stop "$CONTAINER_NAME" || true
+	podman stop -t 2 "$CONTAINER_NAME" || true
 	podman rm "$CONTAINER_NAME" || true
 fi
 

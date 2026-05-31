@@ -8,6 +8,7 @@
 
 	<div class="results-list">
 		{% for match in matches %}
+		{% set match_started = match.kickoff_utc and match.kickoff_utc <= now %}
 		<div class="result-card {{ 'result-finished' if match.status == 'finished' }}" id="match-{{ match.id }}">
 		<div class="result-header">
 			<span class="match-num">{{ _('Match') }} {{ match.match_num }}</span>
@@ -15,6 +16,8 @@
 			{{ kickoff_time(match.kickoff_utc, "result-time") }}
 			{% if match.status == 'finished' %}
 			<span class="badge badge-finished">{{ match.result_source|upper }}</span>
+			{% elif not match_started %}
+			<span class="badge badge-warn">{{ _('NOT STARTED') }}</span>
 			{% endif %}
 		</div>
 			<div class="result-teams">
@@ -24,6 +27,7 @@
 			<div class="result-current">{{ _('Current:') }} {{ match.score_display }}</div>
 			{% endif %}
 
+		{% if match_started %}
 		<form method="POST" class="result-form">
 			<input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 			<input type="hidden" name="match_id" value="{{ match.id }}">
@@ -90,6 +94,7 @@
 			<input type="hidden" name="match_id" value="{{ match.id }}">
 			<button type="submit" class="btn btn-sm btn-danger">{{ _('Clear Result') }}</button>
 		</form>
+		{% endif %}
 		{% endif %}
 	</div>
 		{% endfor %}

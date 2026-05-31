@@ -73,7 +73,7 @@
 						{% endif %}" data-u="{{ user.id }}" data-m="{{ match.id }}">
 						{% if pred and pred.team1_score is not none %}
 						{{ pred.team1_score }}-{{ pred.team2_score }}
-						{% if pred.penalty_winner %}<small>P:{{ pred.penalty_winner[:3] }}</small>{% endif %}
+						{% if pred.penalty_winner %}<small>({{ pred.penalty_winner[:3] }})</small>{% endif %}
 						{% if match.status == 'finished' %}<br><small>{{ pred.points_awarded }}pt</small>{% endif %}
 						{% else %}<span class="no-pred">none</span>{% endif %}
 					</td>

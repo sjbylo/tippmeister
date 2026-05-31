@@ -192,7 +192,7 @@
 			if (data.success) {
 				if (modalSourceEl) {
 					modalSourceEl.innerHTML = t1 + '-' + t2;
-					if (pen) modalSourceEl.innerHTML += '<small>P:' + pen.substring(0, 3) + '</small>';
+					if (pen) modalSourceEl.innerHTML += '<small>(' + pen.substring(0, 3) + ')</small>';
 					modalSourceEl.classList.remove('no-pred');
 				}
 				closeModal();

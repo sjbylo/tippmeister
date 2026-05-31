@@ -69,6 +69,11 @@ def results():
 			flash(_("Match not found."), "error")
 			return redirect(url_for('admin.results'))
 
+		now = get_now()
+		if match.kickoff_utc and match.kickoff_utc > now:
+			flash(_("Cannot enter results for a match that hasn't started yet."), "error")
+			return redirect(url_for('admin.results'))
+
 		try:
 			match.team1_score = int(request.form.get('team1_score', ''))
 			match.team2_score = int(request.form.get('team2_score', ''))
@@ -115,7 +120,7 @@ def results():
 		return redirect(url_for('admin.results'))
 
 	match_list = Match.query.order_by(Match.kickoff_utc).all()
-	return render_template('admin/results.html', matches=match_list)
+	return render_template('admin/results.html', matches=match_list, now=get_now())
 
 
 @admin_bp.route('/clear-result', methods=['POST'])
