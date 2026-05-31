@@ -1,6 +1,11 @@
 #!/bin/bash
-# Start Der Tippmeister container
+# Start Der Tippmeister container — PRODUCTION ONLY (not bastion)
 set -e
+
+if [[ "$(hostname)" == bastion* ]]; then
+	echo "ERROR: This app must NOT run on bastion. Deploy to production host only."
+	exit 1
+fi
 
 IMAGE_NAME="${IMAGE_NAME:-tippmeister}"
 CONTAINER_NAME="${CONTAINER_NAME:-tippmeister}"
