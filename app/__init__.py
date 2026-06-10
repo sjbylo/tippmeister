@@ -72,8 +72,10 @@ def create_app(config_class=Config):
 	app.register_blueprint(main_bp)
 	app.register_blueprint(admin_bp, url_prefix='/admin')
 
+	from app.main import translate_round
 	app.jinja_env.globals['get_now'] = get_now
 	app.jinja_env.globals['get_locale'] = get_locale
+	app.jinja_env.globals['translate_round'] = translate_round
 
 	@app.template_filter('utc_attr')
 	def utc_attr_filter(dt):

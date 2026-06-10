@@ -11,7 +11,7 @@
 		<a href="?filter={{ g }}" class="tab {{ 'active' if filter_type == g }}">{{ g }}</a>
 		{% endfor %}
 		{% for r in knockout_rounds %}
-		<a href="?filter={{ r }}" class="tab {{ 'active' if filter_type == r }}">{{ r }}</a>
+		<a href="?filter={{ r }}" class="tab {{ 'active' if filter_type == r }}">{{ translate_round(r) }}</a>
 		{% endfor %}
 		<a href="?filter=missing" class="tab {{ 'active' if filter_type == 'missing' }}">{{ _('No Tip Yet') }}</a>
 		<a href="?filter=past" class="tab {{ 'active' if filter_type == 'past' }}">{{ _('Past') }}</a>
@@ -55,7 +55,7 @@
 				<td class="sticky-col">{{ match.match_num }}</td>
 				<td class="sticky-col match-cell {% if current_user.is_admin and match.is_knockout and not match.has_known_teams %}admin-knockout-link{% endif %}"
 					{% if current_user.is_admin and match.is_knockout and not match.has_known_teams %}onclick="location.href='{{ url_for('admin.knockout') }}'"{% endif %}>
-					<span class="grid-round">{{ match.group_name or match.round }}</span><br>
+					<span class="grid-round">{{ match.group_name or translate_round(match.round) }}</span><br>
 					<span class="grid-team">{{ match.team1 }}</span> <span class="grid-vs">{{ _('vs') }}</span> <span class="grid-team">{{ match.team2 }}</span>
 				</td>
 					<td class="sticky-col">{{ kickoff_time(match.kickoff_utc) }}</td>
@@ -74,9 +74,9 @@
 				{% if is_me or match_started %}
 				{{ pred.team1_score }}-{{ pred.team2_score }}
 				{% if pred.penalty_winner %}<small>({{ pred.penalty_winner[:3] }})</small>{% endif %}
-				{% if match.status == 'finished' %}<br><small>{{ pred.points_awarded }}pt</small>{% endif %}
+				{% if match.status == 'finished' %}<br><small>{{ pred.points_awarded }} {{ _('pts') }}</small>{% endif %}
 				{% else %}?{% endif %}
-			{% else %}<span class="no-pred">none</span>{% endif %}
+			{% else %}<span class="no-pred">{{ _('none') }}</span>{% endif %}
 			</td>
 			{% endfor %}
 			</tr>

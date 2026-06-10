@@ -12,7 +12,7 @@
 		<div class="result-card {{ 'result-finished' if match.status == 'finished' }}" id="match-{{ match.id }}">
 		<div class="result-header">
 			<span class="match-num">{{ _('Match') }} {{ match.match_num }}</span>
-			<span class="result-round">{{ match.group_name or match.round }}</span>
+			<span class="result-round">{{ match.group_name or translate_round(match.round) }}</span>
 			{{ kickoff_time(match.kickoff_utc, "result-time") }}
 			{% if match.status == 'finished' %}
 			<span class="badge badge-finished">{{ match.result_source|upper }}</span>

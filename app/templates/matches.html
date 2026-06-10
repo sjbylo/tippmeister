@@ -11,7 +11,7 @@
 		<a href="?filter={{ g }}" class="tab {{ 'active' if filter_type == g }}">{{ g }}</a>
 		{% endfor %}
 		{% for r in knockout_rounds %}
-		<a href="?filter={{ r }}" class="tab {{ 'active' if filter_type == r }}">{{ r }}</a>
+		<a href="?filter={{ r }}" class="tab {{ 'active' if filter_type == r }}">{{ translate_round(r) }}</a>
 		{% endfor %}
 		<a href="?filter=missing" class="tab {{ 'active' if filter_type == 'missing' }}">{{ _('No Tip Yet') }}</a>
 		<a href="?filter=past" class="tab {{ 'active' if filter_type == 'past' }}">{{ _('Past') }}</a>
@@ -33,7 +33,7 @@
 		<div class="match-card {{ 'match-finished' if match.status == 'finished' }} {{ 'match-live' if match.status == 'live' }} {{ 'match-card-predict' if can_predict }}"
 			{% if can_predict %}data-match-id="{{ match.id }}" data-team1="{{ match.team1 }}" data-team2="{{ match.team2 }}" data-knockout="{{ 'true' if match.is_knockout else 'false' }}" data-cur-t1="{{ my_pred.team1_score if my_pred and my_pred.team1_score is not none else '' }}" data-cur-t2="{{ my_pred.team2_score if my_pred and my_pred.team2_score is not none else '' }}" data-cur-pen="{{ my_pred.penalty_winner if my_pred and my_pred.penalty_winner else '' }}"{% endif %}>
 			<div class="match-header">
-				<span class="match-round">{{ match.group_name or match.round }}</span>
+				<span class="match-round">{{ match.group_name or translate_round(match.round) }}</span>
 				{{ kickoff_time(match.kickoff_utc, "match-time") }}
 				{% if match.status == 'live' %}
 				<span class="badge badge-live">{{ _('LIVE') }}</span>
@@ -65,10 +65,10 @@
 				{% if my_pred and my_pred.team1_score is not none %}
 				<span class="pred-score">{{ my_pred.score_display }}</span>
 				{% if match.status == 'finished' %}
-				<span class="pred-points">({{ my_pred.points_awarded }}pt{{ 's' if my_pred.points_awarded != 1 }})</span>
+				<span class="pred-points">({{ my_pred.points_awarded }} {{ _('pts') }})</span>
 				{% endif %}
 				{% else %}
-				<span class="pred-score no-pred">none</span>
+				<span class="pred-score no-pred">{{ _('none') }}</span>
 				{% endif %}
 			</div>
 			<span class="others-toggle" title="{{ _('Show/hide other predictions') }}">&#9660;</span>
@@ -87,13 +87,13 @@
 					{% if match_started %}
 					<span class="pred-score">{{ pred.score_display }}</span>
 					{% if match.status == 'finished' %}
-					<span class="pred-points">({{ pred.points_awarded }}pt{{ 's' if pred.points_awarded != 1 }})</span>
+					<span class="pred-points">({{ pred.points_awarded }} {{ _('pts') }})</span>
 					{% endif %}
 					{% else %}
 					<span class="pred-score pred-hidden">?</span>
 					{% endif %}
 				{% else %}
-				<span class="pred-score no-pred">none</span>
+				<span class="pred-score no-pred">{{ _('none') }}</span>
 				{% endif %}
 			</div>
 			{% endif %}

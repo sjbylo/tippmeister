@@ -84,6 +84,16 @@
 	</div>
 	{% endif %}
 
+	<script id="i18n-data" type="application/json">{{ {
+		"vs": _("vs"),
+		"select": _("-- Select --"),
+		"enterBothScores": _("Please enter both scores."),
+		"save": _("Save"),
+		"saveFailed": _("Save failed."),
+		"networkError": _("Network error. Please try again."),
+		"timeWarp": _("TIME WARP"),
+		"allTimesLocal": _("all times local")
+	}|tojson|safe }}</script>
 	<script src="{{ url_for('static', filename='js/app.js') }}"></script>
 	{% block scripts %}{% endblock %}
 </body>

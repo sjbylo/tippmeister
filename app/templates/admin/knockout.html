@@ -12,7 +12,7 @@
 		<div class="knockout-card {{ 'teams-known' if match.has_known_teams }}">
 			<div class="knockout-header">
 				<span class="match-num">{{ _('Match') }} {{ match.match_num }}</span>
-				<span class="knockout-round">{{ match.round }}</span>
+				<span class="knockout-round">{{ translate_round(match.round) }}</span>
 				{{ kickoff_time(match.kickoff_utc, "knockout-time") }}
 			</div>
 		<form method="POST" class="knockout-form">
@@ -55,7 +55,7 @@ document.querySelectorAll('.knockout-form').forEach(function(form) {
 		var t2 = form.querySelector('[name="team2"]').value;
 		if (t1 && t2 && t1 === t2) {
 			e.preventDefault();
-			alert('Team 1 and Team 2 cannot be the same!');
+			alert('{{ _("Team 1 and Team 2 cannot be the same!") }}');
 		}
 	});
 });

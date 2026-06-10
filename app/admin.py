@@ -163,7 +163,8 @@ def all_predictions():
 
 	match_list, filter_type = _filter_matches(filter_type, now)
 
-	users = User.query.order_by(User.display_name).all()
+	other_users = User.query.filter(User.id != current_user.id).order_by(User.display_name).all()
+	users = [current_user] + other_users
 	predictions_map = load_predictions_map(match_list)
 
 	return render_template('admin/predictions.html',

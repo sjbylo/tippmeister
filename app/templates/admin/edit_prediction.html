@@ -9,7 +9,7 @@
 	<div class="edit-pred-card">
 		<div class="edit-pred-info">
 			<p><strong>{{ _('Match') }} {{ match.match_num }}:</strong> {{ match.team1 }} {{ _('vs') }} {{ match.team2 }}</p>
-			<p><strong>{{ _('Round:') }}</strong> {{ match.group_name or match.round }}</p>
+			<p><strong>{{ _('Round:') }}</strong> {{ match.group_name or translate_round(match.round) }}</p>
 			{% if match.kickoff_utc %}
 			<p><strong>{{ _('Kickoff:') }}</strong> {{ kickoff_time(match.kickoff_utc) }}</p>
 			{% endif %}

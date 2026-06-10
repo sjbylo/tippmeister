@@ -4,19 +4,26 @@
 <div class="leaderboard-page">
 	<h2>{{ _('Leaderboard') }}</h2>
 
+	<div class="filter-tabs">
+		<button id="lb-total-btn" class="tab active" onclick="showTotal()">{{ _('Total Points') }}</button>
+		<button id="lb-avg-btn" class="tab" onclick="showAvg()">{{ _('Points per Tip') }}</button>
+	</div>
+
 	<div class="leaderboard-table-wrap">
-		<table class="leaderboard-table">
+		<table class="leaderboard-table" id="lb-table">
 			<thead>
 				<tr>
 					<th>#</th>
 					<th>{{ _('Player') }}</th>
-					<th>{{ _('Points') }}</th>
+					<th id="lb-pts-header">{{ _('Points') }}</th>
 					<th>{{ _('Predictions') }}</th>
 				</tr>
 			</thead>
 			<tbody>
 				{% for row in scores %}
-				<tr class="{{ 'highlight' if row.id == current_user.id }}
+				<tr data-total="{{ row.total_points }}" data-count="{{ row.predictions_made }}"
+					data-uid="{{ row.id }}"
+					class="{{ 'highlight' if row.id == current_user.id }}
 						   {{ 'top-1' if loop.index == 1 }}
 						   {{ 'top-2' if loop.index == 2 }}
 						   {{ 'top-3' if loop.index == 3 }}">
@@ -32,4 +39,54 @@
 		</table>
 	</div>
 </div>
+
+<script>
+var curUserId = {{ current_user.id }};
+
+function rerank() {
+	var tbody = document.querySelector('#lb-table tbody');
+	var rows = Array.from(tbody.querySelectorAll('tr'));
+	rows.sort(function(a, b) { return parseFloat(b.dataset.sort) - parseFloat(a.dataset.sort); });
+	rows.forEach(function(row, i) {
+		row.className = row.dataset.uid == curUserId ? 'highlight' : '';
+		var rank = row.querySelector('.rank');
+		if (i === 0) { rank.textContent = '\u{1F947}'; row.classList.add('top-1'); }
+		else if (i === 1) { rank.textContent = '\u{1F948}'; row.classList.add('top-2'); }
+		else if (i === 2) { rank.textContent = '\u{1F949}'; row.classList.add('top-3'); }
+		else { rank.textContent = i + 1; }
+		tbody.appendChild(row);
+	});
+}
+
+function showTotal() {
+	document.getElementById('lb-total-btn').classList.add('active');
+	document.getElementById('lb-avg-btn').classList.remove('active');
+	document.getElementById('lb-pts-header').textContent = '{{ _("Points") }}';
+	var rows = document.querySelectorAll('#lb-table tbody tr');
+	rows.forEach(function(row) {
+		row.dataset.sort = row.dataset.total;
+		row.querySelector('.points').textContent = row.dataset.total;
+	});
+	rerank();
+}
+
+function showAvg() {
+	document.getElementById('lb-avg-btn').classList.add('active');
+	document.getElementById('lb-total-btn').classList.remove('active');
+	document.getElementById('lb-pts-header').textContent = '{{ _("Pts/Tip") }}';
+	var rows = document.querySelectorAll('#lb-table tbody tr');
+	rows.forEach(function(row) {
+		var count = parseInt(row.dataset.count) || 0;
+		var total = parseInt(row.dataset.total) || 0;
+		var avg = count > 0 ? (total / count).toFixed(2) : '0.00';
+		row.dataset.sort = avg;
+		row.querySelector('.points').textContent = avg;
+	});
+	rerank();
+}
+
+document.querySelectorAll('#lb-table tbody tr').forEach(function(row) {
+	row.dataset.sort = row.dataset.total;
+});
+</script>
 {% endblock %}

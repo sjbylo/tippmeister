@@ -20,7 +20,7 @@
 			{% set pred = user_preds.get(match.id) %}
 			<div class="pred-row" id="match-{{ match.id }}" data-knockout="{{ 'true' if match.is_knockout else 'false' }}" data-match-id="{{ match.id }}">
 				<div class="pred-match-info">
-					<span class="pred-round">{{ match.group_name or match.round }}</span>
+					<span class="pred-round">{{ match.group_name or translate_round(match.round) }}</span>
 					{{ kickoff_time(match.kickoff_utc, "pred-time") }}
 					<span class="pred-venue">{{ match.venue }}</span>
 				</div>
@@ -58,7 +58,7 @@
 			{% set pred = user_preds.get(match.id) %}
 			<div class="pred-row" id="match-{{ match.id }}" data-knockout="{{ 'true' if match.is_knockout else 'false' }}" data-match-id="{{ match.id }}">
 				<div class="pred-match-info">
-					<span class="pred-round">{{ match.group_name or match.round }}</span>
+					<span class="pred-round">{{ match.group_name or translate_round(match.round) }}</span>
 					{{ kickoff_time(match.kickoff_utc, "pred-time") }}
 					<span class="pred-venue">{{ match.venue }}</span>
 				</div>

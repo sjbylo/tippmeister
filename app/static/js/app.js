@@ -3,6 +3,13 @@
 (function() {
 	'use strict';
 
+	var i18n = {};
+	try {
+		var el = document.getElementById('i18n-data');
+		if (el) i18n = JSON.parse(el.textContent);
+	} catch(e) {}
+	function t(key, fallback) { return i18n[key] || fallback || key; }
+
 	// Convert UTC times to user's local timezone
 	function convertTimezones() {
 		var elements = document.querySelectorAll('[data-utc]');
@@ -51,7 +58,7 @@
 		if (!bar) return;
 		var tz = document.body.getAttribute('data-timezone') || Intl.DateTimeFormat().resolvedOptions().timeZone;
 		var warp = document.body.getAttribute('data-warp');
-		var suffix = ' &mdash; <a href="/profile" class="local-time-link">all times local</a>';
+		var suffix = ' &mdash; <a href="/profile" class="local-time-link">' + t('allTimesLocal', 'all times local') + '</a>';
 
 		if (warp) {
 			var warpDate = new Date(warp.indexOf('Z') < 0 && warp.indexOf('+') < 0 ? warp + 'Z' : warp);
@@ -60,7 +67,7 @@
 				hour: '2-digit', minute: '2-digit', second: '2-digit',
 				hour12: false, timeZone: tz
 			};
-			bar.innerHTML = '<span class="warp-badge">TIME WARP</span> ' +
+			bar.innerHTML = '<span class="warp-badge">' + t('timeWarp', 'TIME WARP') + '</span> ' +
 				warpDate.toLocaleString(undefined, opts) + suffix;
 			return;
 		}
@@ -110,7 +117,7 @@
 		modalMatchId = matchId;
 		modalSourceEl = sourceEl || null;
 
-		document.getElementById('modal-title').textContent = team1 + ' vs ' + team2;
+		document.getElementById('modal-title').textContent = team1 + ' ' + t('vs', 'vs') + ' ' + team2;
 		document.getElementById('modal-team1').textContent = team1;
 		document.getElementById('modal-team2').textContent = team2;
 		document.getElementById('modal-t1').value = curT1 !== null && curT1 !== '' ? curT1 : '';
@@ -120,7 +127,7 @@
 		var penRow = document.getElementById('modal-pen-row');
 		var penSelect = document.getElementById('modal-pen');
 		if (isKnockout) {
-			penSelect.innerHTML = '<option value="">-- Select --</option>' +
+			penSelect.innerHTML = '<option value="">' + t('select', '-- Select --') + '</option>' +
 				'<option value="' + team1 + '">' + team1 + '</option>' +
 				'<option value="' + team2 + '">' + team2 + '</option>';
 			if (curPen) penSelect.value = curPen;
@@ -163,7 +170,7 @@
 		}
 
 		if (t1 === '' || t2 === '') {
-			showModalError('Please enter both scores.');
+			showModalError(t('enterBothScores', 'Please enter both scores.'));
 			return;
 		}
 
@@ -188,7 +195,7 @@
 			return resp.json();
 		}).then(function(data) {
 			saveBtn.disabled = false;
-			saveBtn.textContent = 'Save';
+			saveBtn.textContent = t('save', 'Save');
 			if (data.success) {
 				if (modalSourceEl) {
 					modalSourceEl.innerHTML = t1 + '-' + t2;
@@ -197,12 +204,12 @@
 				}
 				closeModal();
 			} else {
-				showModalError(data.error || 'Save failed.');
+				showModalError(data.error || t('saveFailed', 'Save failed.'));
 			}
 		}).catch(function() {
 			saveBtn.disabled = false;
-			saveBtn.textContent = 'Save';
-			showModalError('Network error. Please try again.');
+			saveBtn.textContent = t('save', 'Save');
+			showModalError(t('networkError', 'Network error. Please try again.'));
 		});
 	}
 

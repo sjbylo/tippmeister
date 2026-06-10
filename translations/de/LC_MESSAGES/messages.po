@@ -239,18 +239,6 @@ msgstr "Ergebnis"
 msgid "vs"
 msgstr "gegen"
 
-#: app/templates/leaderboard.html:8
-msgid "Top 3"
-msgstr "Top 3"
-
-#: app/templates/leaderboard.html:9
-msgid "Top 5"
-msgstr "Top 5"
-
-#: app/templates/leaderboard.html:10
-msgid "Top 10"
-msgstr "Top 10"
-
 #: app/templates/leaderboard.html:19
 msgid "Player"
 msgstr "Spieler"
@@ -491,22 +479,6 @@ msgstr ""
 "entscheidet nur darüber, wer weiterkommt, verändert aber nicht das "
 "Spielergebnis."
 
-#: app/templates/rules.html:67
-msgid "Past Results"
-msgstr "Vergangene Ergebnisse"
-
-msgid "Pending"
-msgstr "Ausstehend"
-
-msgid "My prediction:"
-msgstr "Mein Tipp:"
-
-msgid "No prediction"
-msgstr "Kein Tipp"
-
-msgid "Important"
-msgstr "Wichtig"
-
 #: app/templates/rules.html:69
 msgid "Predictions must be submitted <strong>before the match kicks off</strong>."
 msgstr "Tipps müssen <strong>vor dem Anpfiff</strong> abgegeben werden."
@@ -701,14 +673,6 @@ msgstr "Aktualisieren"
 msgid "All Predictions"
 msgstr "Alle Tipps"
 
-#: app/templates/admin/predictions.html:5
-msgid "All Predictions (Admin View)"
-msgstr "Alle Tipps (Admin-Ansicht)"
-
-#: app/templates/admin/predictions.html:7
-msgid "All predictions are visible here, including before kickoff."
-msgstr "Alle Tipps sind hier sichtbar, auch vor Anpfiff."
-
 #: app/templates/admin/predictions.html:31
 msgid "Kickoff"
 msgstr "Anpfiff"
@@ -716,16 +680,6 @@ msgstr "Anpfiff"
 #: app/templates/admin/predictions.html:50
 msgid "Not started"
 msgstr "Noch nicht begonnen"
-
-#: app/templates/admin/predictions.html:53
-#, fuzzy
-msgid "Edit result"
-msgstr "Ergebnis bearbeiten"
-
-#: app/templates/admin/predictions.html:64
-#, python-format
-msgid "Edit prediction for %(name)s"
-msgstr "Tipp von %(name)s bearbeiten"
 
 #: app/templates/admin/results.html:5
 msgid "Enter / Edit Match Results"
@@ -839,4 +793,179 @@ msgstr "Keine E-Mail erhalten?"
 
 msgid "Resend verification email"
 msgstr "Bestätigungsmail erneut senden"
+
+# --- Missing strings added ---
+
+msgid "No Tip Yet"
+msgstr "Noch kein Tipp"
+
+msgid "Needs Your Tip"
+msgstr "Dein Tipp fehlt"
+
+msgid "Already Predicted"
+msgstr "Bereits getippt"
+
+msgid "Show/hide other predictions"
+msgstr "Andere Tipps ein-/ausblenden"
+
+msgid "Total Points"
+msgstr "Gesamtpunkte"
+
+msgid "Points per Tip"
+msgstr "Punkte pro Tipp"
+
+msgid "Pts/Tip"
+msgstr "Pkt/Tipp"
+
+msgid "Detected:"
+msgstr "Erkannt:"
+
+msgid "Use this"
+msgstr "Übernehmen"
+
+msgid "none"
+msgstr "keiner"
+
+msgid "pts"
+msgstr "Pkt"
+
+msgid "NOT STARTED"
+msgstr "NOCH NICHT BEGONNEN"
+
+msgid "ADMIN VIEW — All predictions visible"
+msgstr "ADMIN-ANSICHT — Alle Tipps sichtbar"
+
+msgid "-- Select Team --"
+msgstr "-- Team auswählen --"
+
+# Admin user management
+msgid "Manage Users"
+msgstr "Benutzer verwalten"
+
+msgid "Name"
+msgstr "Name"
+
+msgid "Edit"
+msgstr "Bearbeiten"
+
+msgid "Delete"
+msgstr "Löschen"
+
+msgid "users total"
+msgstr "Benutzer insgesamt"
+
+#, python-format
+msgid "Delete user %(name)s and all their predictions?"
+msgstr "Benutzer %(name)s und alle Tipps löschen?"
+
+msgid "Edit User"
+msgstr "Benutzer bearbeiten"
+
+msgid "Back to Users"
+msgstr "Zurück zu Benutzer"
+
+msgid "Reset Password"
+msgstr "Passwort zurücksetzen"
+
+msgid "Min 8 characters"
+msgstr "Mind. 8 Zeichen"
+
+msgid "User ID:"
+msgstr "Benutzer-ID:"
+
+msgid "Predictions:"
+msgstr "Tipps:"
+
+msgid "Joined:"
+msgstr "Beigetreten:"
+
+msgid "Delete this user and all their predictions? This cannot be undone."
+msgstr "Diesen Benutzer und alle Tipps löschen? Dies kann nicht rückgängig gemacht werden."
+
+msgid "Delete User"
+msgstr "Benutzer löschen"
+
+# Admin flash messages
+msgid "Cannot enter results for a match that hasn't started yet."
+msgstr "Ergebnisse können erst nach Spielbeginn eingegeben werden."
+
+#, python-format
+msgid "Result cleared for Match %(num)d: %(t1)s vs %(t2)s."
+msgstr "Ergebnis für Spiel %(num)d gelöscht: %(t1)s gegen %(t2)s."
+
+msgid "Team 1 and Team 2 cannot be the same!"
+msgstr "Team 1 und Team 2 dürfen nicht identisch sein!"
+
+msgid "User not found."
+msgstr "Benutzer nicht gefunden."
+
+#, python-format
+msgid "User %(name)s updated."
+msgstr "Benutzer %(name)s aktualisiert."
+
+#, python-format
+msgid "Password reset for %(name)s."
+msgstr "Passwort für %(name)s zurückgesetzt."
+
+msgid "You cannot delete yourself."
+msgstr "Du kannst dich nicht selbst löschen."
+
+#, python-format
+msgid "User %(name)s deleted."
+msgstr "Benutzer %(name)s gelöscht."
+
+#, python-format
+msgid "Clear result for Match %(num)d? Points will be reset to 0."
+msgstr "Ergebnis für Spiel %(num)d löschen? Punkte werden auf 0 zurückgesetzt."
+
+msgid "Clear Result"
+msgstr "Ergebnis löschen"
+
+# API / modal errors
+msgid "Match has already started."
+msgstr "Das Spiel hat bereits begonnen."
+
+msgid "Teams not yet determined."
+msgstr "Teams stehen noch nicht fest."
+
+msgid "Scores must be between 0 and 99."
+msgstr "Ergebnisse müssen zwischen 0 und 99 liegen."
+
+msgid "Draw in knockout requires a penalty winner."
+msgstr "Unentschieden in der K.o.-Runde erfordert einen Elfmeter-Gewinner."
+
+# JS strings
+msgid "Please enter both scores."
+msgstr "Bitte beide Ergebnisse eingeben."
+
+msgid "Save failed."
+msgstr "Speichern fehlgeschlagen."
+
+msgid "Network error. Please try again."
+msgstr "Netzwerkfehler. Bitte erneut versuchen."
+
+msgid "TIME WARP"
+msgstr "ZEITREISE"
+
+msgid "all times local"
+msgstr "alle Zeiten lokal"
+
+# Knockout round names
+msgid "Round of 32"
+msgstr "Runde der 32"
+
+msgid "Round of 16"
+msgstr "Achtelfinale"
+
+msgid "Quarter-final"
+msgstr "Viertelfinale"
+
+msgid "Semi-final"
+msgstr "Halbfinale"
+
+msgid "Match for third place"
+msgstr "Spiel um Platz 3"
+
+msgid "Final"
+msgstr "Finale"
 

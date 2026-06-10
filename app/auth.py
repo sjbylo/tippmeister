@@ -74,6 +74,10 @@ def register(token):
 		user.verify_token = secrets.token_urlsafe(48)
 		user.verify_sent_at = datetime.utcnow()
 
+		language = request.form.get('language', '').strip()
+		if language in ('en', 'de'):
+			user.language = language
+
 		detected_tz = request.form.get('timezone', '').strip()
 		if detected_tz:
 			import pytz

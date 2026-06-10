@@ -14,6 +14,18 @@ KNOCKOUT_ROUNDS = (
 	'Semi-final', 'Match for third place', 'Final'
 )
 
+def translate_round(round_name):
+	"""Translate a knockout round name stored in the DB."""
+	mapping = {
+		'Round of 32': _('Round of 32'),
+		'Round of 16': _('Round of 16'),
+		'Quarter-final': _('Quarter-final'),
+		'Semi-final': _('Semi-final'),
+		'Match for third place': _('Match for third place'),
+		'Final': _('Final'),
+	}
+	return mapping.get(round_name, round_name)
+
 
 def _user_today_utc_bounds(now):
 	"""Return (start, end) of the user's local 'today' as naive UTC datetimes."""

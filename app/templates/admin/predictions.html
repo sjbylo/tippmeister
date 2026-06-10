@@ -16,7 +16,7 @@
 		<a href="?filter={{ g }}" class="tab {{ 'active' if filter_type == g }}">{{ g }}</a>
 		{% endfor %}
 		{% for r in knockout_rounds %}
-		<a href="?filter={{ r }}" class="tab {{ 'active' if filter_type == r }}">{{ r }}</a>
+		<a href="?filter={{ r }}" class="tab {{ 'active' if filter_type == r }}">{{ translate_round(r) }}</a>
 		{% endfor %}
 		<a href="?filter=past" class="tab {{ 'active' if filter_type == 'past' }}">{{ _('Past') }}</a>
 		<a href="?filter=all" class="tab {{ 'active' if filter_type == 'all' }}">{{ _('All') }}</a>
@@ -36,7 +36,7 @@
 					<th class="sticky-col">{{ _('Kickoff') }}</th>
 					<th class="sticky-col">{{ _('Result') }}</th>
 					{% for user in users %}
-					<th class="user-col">{{ user.display_name }}</th>
+					<th class="user-col {{ 'my-col' if user.id == current_user.id }}">{{ user.display_name }}</th>
 					{% endfor %}
 				</tr>
 			</thead>
@@ -54,7 +54,7 @@
 					<td class="sticky-col">{{ match.match_num }}</td>
 					<td class="sticky-col match-cell {% if match.is_knockout and not match.has_known_teams %}admin-knockout-link{% endif %}"
 						{% if match.is_knockout and not match.has_known_teams %}onclick="location.href='{{ url_for('admin.knockout') }}'"{% endif %}>
-						<span class="grid-round">{{ match.group_name or match.round }}</span><br>
+						<span class="grid-round">{{ match.group_name or translate_round(match.round) }}</span><br>
 						<span class="grid-team">{{ match.team1 }}</span> <span class="grid-vs">{{ _('vs') }}</span> <span class="grid-team">{{ match.team2 }}</span>
 					</td>
 					<td class="sticky-col">
@@ -66,7 +66,8 @@
 					</td>
 					{% for user in users %}
 					{% set pred = preds.get(user.id) %}
-					<td class="pred-cell clickable-cell
+					{% set is_me = user.id == current_user.id %}
+					<td class="pred-cell clickable-cell {{ 'my-col' if is_me }}
 						{% if not match_started and pred and pred.team1_score is not none %}admin-peek{% endif %}
 						{% if match.status == 'finished' and pred %}
 							{% if pred.points_awarded >= 3 %}pts-3{% elif pred.points_awarded >= 1 %}pts-1{% else %}pts-0{% endif %}
@@ -74,8 +75,8 @@
 						{% if pred and pred.team1_score is not none %}
 						{{ pred.team1_score }}-{{ pred.team2_score }}
 						{% if pred.penalty_winner %}<small>({{ pred.penalty_winner[:3] }})</small>{% endif %}
-						{% if match.status == 'finished' %}<br><small>{{ pred.points_awarded }}pt</small>{% endif %}
-						{% else %}<span class="no-pred">none</span>{% endif %}
+						{% if match.status == 'finished' %}<br><small>{{ pred.points_awarded }} {{ _('pts') }}</small>{% endif %}
+						{% else %}<span class="no-pred">{{ _('none') }}</span>{% endif %}
 					</td>
 					{% endfor %}
 				</tr>
