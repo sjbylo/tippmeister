@@ -403,6 +403,14 @@ def edit_user(user_id):
 	return render_template('admin/edit_user.html', user=user, timezones=timezones, pred_count=pred_count)
 
 
+@admin_bp.route('/tip-status')
+@admin_required
+def tip_status():
+	from app.notifications import get_tip_status_data
+	data = get_tip_status_data(hours_ahead=48)
+	return render_template('admin/tip_status.html', **data)
+
+
 def _send_result_emails_for_match(match):
 	"""Send result notification emails in background so admin gets instant response."""
 	app = current_app._get_current_object()

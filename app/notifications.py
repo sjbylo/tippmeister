@@ -141,8 +141,154 @@ def send_daily_reminders(app):
 		log.info(f"Sent daily reminders for {len(upcoming)} matches on {date_str}")
 
 
+def get_tip_status_data(hours_ahead=48):
+	"""Build tip status data for upcoming matches. Must be called within app context."""
+	from app.models import Match, Prediction, User
+	from app import db, get_now
+	from datetime import timedelta
+
+	now = get_now()
+	window_end = now + timedelta(hours=hours_ahead)
+
+	upcoming = Match.query.filter(
+		Match.kickoff_utc >= now,
+		Match.kickoff_utc <= window_end,
+		Match.status == 'scheduled',
+	).order_by(Match.kickoff_utc).all()
+
+	users = User.query.filter_by(email_verified=True).order_by(User.display_name).all()
+
+	if not upcoming:
+		return {'matches': [], 'user_statuses': [], 'generated_at': now}
+
+	match_ids = [m.id for m in upcoming]
+
+	user_statuses = []
+	for user in users:
+		user_predictions = Prediction.query.filter(
+			Prediction.user_id == user.id,
+			Prediction.match_id.in_(match_ids),
+		).all()
+
+		predicted_match_ids = {p.match_id for p in user_predictions}
+		missing_matches = [m for m in upcoming if m.id not in predicted_match_ids]
+
+		last_tip = Prediction.query.filter(
+			Prediction.user_id == user.id,
+		).order_by(Prediction.updated_at.desc()).first()
+
+		user_statuses.append({
+			'user': user,
+			'tipped_count': len(predicted_match_ids),
+			'total_count': len(upcoming),
+			'missing_matches': missing_matches,
+			'last_tip_at': last_tip.updated_at if last_tip else None,
+		})
+
+	user_statuses.sort(key=lambda s: (-len(s['missing_matches']), s['user'].display_name))
+
+	return {
+		'matches': upcoming,
+		'user_statuses': user_statuses,
+		'generated_at': now,
+	}
+
+
+def send_admin_status_email(app):
+	"""Send tip status summary email to all admin users."""
+	from app.models import User
+
+	with app.app_context():
+		data = get_tip_status_data(hours_ahead=48)
+		if not data['matches']:
+			log.info("Admin status: no upcoming matches in 48h window, skipping email")
+			return
+
+		admins = User.query.filter_by(is_admin=True, email_verified=True).all()
+		if not admins:
+			return
+
+		url = _site_url()
+		match_rows = ""
+		for m in data['matches']:
+			kickoff = m.kickoff_utc.strftime('%b %d, %H:%M UTC') if m.kickoff_utc else 'TBD'
+			match_rows += f"<tr><td>{m.match_num}</td><td>{m.team1} vs {m.team2}</td><td>{kickoff}</td></tr>\n"
+
+		user_rows = ""
+		for s in data['user_statuses']:
+			missing_count = len(s['missing_matches'])
+			color = "#d32f2f" if missing_count > 0 else "#388e3c"
+			status_text = f"{s['tipped_count']}/{s['total_count']}"
+
+			if missing_count > 0:
+				missing_names = ", ".join(f"{m.team1} vs {m.team2}" for m in s['missing_matches'][:3])
+				if missing_count > 3:
+					missing_names += f" (+{missing_count - 3} more)"
+			else:
+				missing_names = "All done"
+
+			last_tip_str = s['last_tip_at'].strftime('%b %d, %H:%M') if s['last_tip_at'] else "Never"
+
+			user_rows += (
+				f'<tr style="color:{color}">'
+				f'<td><strong>{s["user"].display_name}</strong></td>'
+				f'<td>{status_text}</td>'
+				f'<td>{missing_names}</td>'
+				f'<td>{last_tip_str}</td>'
+				f'</tr>\n'
+			)
+
+		subject = f"Der Tippmeister: Tip Status ({len(data['matches'])} upcoming matches)"
+		body_html = f"""
+		<h2>Tip Status Summary</h2>
+		<p>{len(data['matches'])} match(es) in the next 48 hours:</p>
+		<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-size:14px">
+		<tr style="background:#f5f5f5"><th>#</th><th>Match</th><th>Kickoff</th></tr>
+		{match_rows}
+		</table>
+		<br>
+		<h3>User Status</h3>
+		<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-size:14px">
+		<tr style="background:#f5f5f5"><th>User</th><th>Tipped</th><th>Missing</th><th>Last Tip</th></tr>
+		{user_rows}
+		</table>
+		<br>
+		<p><a href="{url}/admin/tip-status" style="color:#00a651;font-weight:bold">View full status in app</a></p>
+		<p><em>Der Tippmeister</em></p>
+		"""
+
+		for admin in admins:
+			try:
+				send_email(admin.email, subject, body_html)
+			except Exception as e:
+				log.warning(f"Failed to send admin status to {admin.email}: {e}")
+
+		log.info(f"Admin status email sent to {len(admins)} admin(s)")
+
+
+def _check_and_send_admin_status(app):
+	"""Check if matches are 42-48h away and send admin status if so."""
+	from app.models import Match
+	from app import get_now
+	from datetime import timedelta
+
+	with app.app_context():
+		now = get_now()
+		window_start = now + timedelta(hours=42)
+		window_end = now + timedelta(hours=48)
+
+		has_matches = Match.query.filter(
+			Match.kickoff_utc >= window_start,
+			Match.kickoff_utc <= window_end,
+			Match.status == 'scheduled',
+		).first()
+
+		if has_matches:
+			send_admin_status_email(app)
+
+
 def setup_reminder_scheduler(app):
-	"""Schedule daily reminder emails (runs once per day at 18:00 UTC)."""
+	"""Schedule daily reminder emails and admin status checks."""
 	from apscheduler.schedulers.background import BackgroundScheduler
 
 	scheduler = BackgroundScheduler()
@@ -155,6 +301,15 @@ def setup_reminder_scheduler(app):
 		id='daily_reminder',
 		replace_existing=True,
 	)
+	scheduler.add_job(
+		func=_check_and_send_admin_status,
+		args=[app],
+		trigger='cron',
+		hour='*/6',
+		minute=30,
+		id='admin_status_check',
+		replace_existing=True,
+	)
 	scheduler.start()
-	log.info("Reminder email scheduler started (daily at 18:00 UTC)")
+	log.info("Schedulers started (daily reminders at 18:00 UTC, admin status every 6h)")
 	return scheduler

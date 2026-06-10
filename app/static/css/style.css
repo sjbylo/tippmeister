@@ -1150,3 +1150,9 @@ a:hover {
 .match-card-predict {
 	cursor: pointer;
 }
+
+/* Tip Status page */
+.status-missing td { color: var(--red); }
+.status-ok td { color: var(--green-light); }
+.text-success { color: var(--green-light); }
+.text-muted { color: var(--text-muted); }

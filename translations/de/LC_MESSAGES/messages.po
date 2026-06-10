@@ -969,3 +969,43 @@ msgstr "Spiel um Platz 3"
 msgid "Final"
 msgstr "Finale"
 
+# Tip Status page
+msgid "Tip Status"
+msgstr "Tipp-Status"
+
+msgid "Generated:"
+msgstr "Erstellt:"
+
+msgid "No upcoming matches in the next 48 hours."
+msgstr "Keine anstehenden Spiele in den nächsten 48 Stunden."
+
+msgid "Upcoming Matches"
+msgstr "Anstehende Spiele"
+
+msgid "Kickoff (UTC)"
+msgstr "Anstoß (UTC)"
+
+msgid "User Tip Status"
+msgstr "Benutzer Tipp-Status"
+
+msgid "Tipped"
+msgstr "Getippt"
+
+msgid "Missing"
+msgstr "Fehlend"
+
+msgid "Last Tip"
+msgstr "Letzter Tipp"
+
+msgid "more"
+msgstr "weitere"
+
+msgid "All done"
+msgstr "Alles erledigt"
+
+msgid "Never"
+msgstr "Nie"
+
+msgid "Back to Admin"
+msgstr "Zurück zur Admin-Seite"
+
