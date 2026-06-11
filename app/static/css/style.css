@@ -1152,6 +1152,33 @@ a:hover {
 }
 
 /* Tip Status page */
+.status-summary {
+	color: var(--text-muted);
+	margin-bottom: 1rem;
+}
+.status-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: 0.95rem;
+	margin-bottom: 1.5rem;
+	background: var(--bg-card);
+	border: 1px solid rgba(255,255,255,0.25);
+}
+.status-table th,
+.status-table td {
+	border: 1px solid rgba(255,255,255,0.2);
+	padding: 0.65rem 1rem;
+	text-align: left;
+	vertical-align: middle;
+}
+.status-table thead th {
+	background: rgba(255,255,255,0.1);
+	font-weight: 600;
+	white-space: nowrap;
+}
+.status-table tbody tr:hover {
+	background: rgba(255,255,255,0.04);
+}
 .status-missing td { color: var(--red); }
 .status-ok td { color: var(--green-light); }
 .text-success { color: var(--green-light); }

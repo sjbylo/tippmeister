@@ -3,8 +3,20 @@ import logging
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from flask import current_app
+import pytz
 
 log = logging.getLogger(__name__)
+
+
+def _to_local(dt, tz_name):
+	"""Convert a naive UTC datetime to a timezone-aware local datetime."""
+	if not dt or not tz_name:
+		return dt
+	try:
+		tz = pytz.timezone(tz_name)
+	except pytz.UnknownTimeZoneError:
+		return dt
+	return pytz.utc.localize(dt).astimezone(tz)
 
 
 def _site_url():
@@ -194,8 +206,16 @@ def get_tip_status_data(hours_ahead=48):
 	}
 
 
+def _format_local(dt, tz_name):
+	"""Format a UTC datetime in the given timezone as 'Jun 11, 15:00'."""
+	if not dt:
+		return "Never"
+	local = _to_local(dt, tz_name)
+	return local.strftime('%b %d, %H:%M')
+
+
 def send_admin_status_email(app):
-	"""Send tip status summary email to all admin users."""
+	"""Send tip status summary email to each admin in their local timezone."""
 	from app.models import User
 
 	with app.app_context():
@@ -209,55 +229,59 @@ def send_admin_status_email(app):
 			return
 
 		url = _site_url()
-		match_rows = ""
-		for m in data['matches']:
-			kickoff = m.kickoff_utc.strftime('%b %d, %H:%M UTC') if m.kickoff_utc else 'TBD'
-			match_rows += f"<tr><td>{m.match_num}</td><td>{m.team1} vs {m.team2}</td><td>{kickoff}</td></tr>\n"
-
-		user_rows = ""
-		for s in data['user_statuses']:
-			missing_count = len(s['missing_matches'])
-			color = "#d32f2f" if missing_count > 0 else "#388e3c"
-			status_text = f"{s['tipped_count']}/{s['total_count']}"
-
-			if missing_count > 0:
-				missing_names = ", ".join(f"{m.team1} vs {m.team2}" for m in s['missing_matches'][:3])
-				if missing_count > 3:
-					missing_names += f" (+{missing_count - 3} more)"
-			else:
-				missing_names = "All done"
-
-			last_tip_str = s['last_tip_at'].strftime('%b %d, %H:%M') if s['last_tip_at'] else "Never"
-
-			user_rows += (
-				f'<tr style="color:{color}">'
-				f'<td><strong>{s["user"].display_name}</strong></td>'
-				f'<td>{status_text}</td>'
-				f'<td>{missing_names}</td>'
-				f'<td>{last_tip_str}</td>'
-				f'</tr>\n'
-			)
-
-		subject = f"Der Tippmeister: Tip Status ({len(data['matches'])} upcoming matches)"
-		body_html = f"""
-		<h2>Tip Status Summary</h2>
-		<p>{len(data['matches'])} match(es) in the next 48 hours:</p>
-		<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-size:14px">
-		<tr style="background:#f5f5f5"><th>#</th><th>Match</th><th>Kickoff</th></tr>
-		{match_rows}
-		</table>
-		<br>
-		<h3>User Status</h3>
-		<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-size:14px">
-		<tr style="background:#f5f5f5"><th>User</th><th>Tipped</th><th>Missing</th><th>Last Tip</th></tr>
-		{user_rows}
-		</table>
-		<br>
-		<p><a href="{url}/admin/tip-status" style="color:#00a651;font-weight:bold">View full status in app</a></p>
-		<p><em>Der Tippmeister</em></p>
-		"""
 
 		for admin in admins:
+			tz = admin.timezone or 'UTC'
+			tz_label = tz.replace('_', ' ').split('/')[-1]
+
+			match_rows = ""
+			for m in data['matches']:
+				kickoff = _format_local(m.kickoff_utc, tz) if m.kickoff_utc else 'TBD'
+				match_rows += f"<tr><td>{m.match_num}</td><td>{m.team1} vs {m.team2}</td><td>{kickoff}</td></tr>\n"
+
+			user_rows = ""
+			for s in data['user_statuses']:
+				missing_count = len(s['missing_matches'])
+				color = "#d32f2f" if missing_count > 0 else "#388e3c"
+				status_text = f"{s['tipped_count']}/{s['total_count']}"
+
+				if missing_count > 0:
+					missing_names = ", ".join(f"{m.team1} vs {m.team2}" for m in s['missing_matches'][:3])
+					if missing_count > 3:
+						missing_names += f" (+{missing_count - 3} more)"
+				else:
+					missing_names = "All done"
+
+				last_tip_str = _format_local(s['last_tip_at'], tz) if s['last_tip_at'] else "Never"
+
+				user_rows += (
+					f'<tr style="color:{color}">'
+					f'<td><strong>{s["user"].display_name}</strong></td>'
+					f'<td>{status_text}</td>'
+					f'<td>{missing_names}</td>'
+					f'<td>{last_tip_str}</td>'
+					f'</tr>\n'
+				)
+
+			subject = f"Der Tippmeister: Tip Status ({len(data['matches'])} upcoming matches)"
+			body_html = f"""
+			<h2>Tip Status Summary</h2>
+			<p>{len(data['matches'])} match(es) in the next 48 hours (times in {tz_label}):</p>
+			<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-size:14px">
+			<tr style="background:#f5f5f5"><th>#</th><th>Match</th><th>Kickoff</th></tr>
+			{match_rows}
+			</table>
+			<br>
+			<h3>User Status</h3>
+			<table border="1" cellpadding="6" cellspacing="0" style="border-collapse:collapse;font-size:14px">
+			<tr style="background:#f5f5f5"><th>User</th><th>Tipped</th><th>Missing</th><th>Last Tip</th></tr>
+			{user_rows}
+			</table>
+			<br>
+			<p><a href="{url}/admin/tip-status" style="color:#00a651;font-weight:bold">View full status in app</a></p>
+			<p><em>Der Tippmeister</em></p>
+			"""
+
 			try:
 				send_email(admin.email, subject, body_html)
 			except Exception as e:

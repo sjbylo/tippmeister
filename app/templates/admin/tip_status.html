@@ -1,70 +1,70 @@
 {% extends "base.html" %}
+{% from "_macros.html" import kickoff_time %}
 {% block title %}{{ _('Tip Status') }} - Der Tippmeister{% endblock %}
 {% block content %}
 <div class="admin-page">
 	<h2>{{ _('Tip Status') }}</h2>
-	<p class="text-muted">{{ _('Generated:') }} {{ generated_at.strftime('%Y-%m-%d %H:%M UTC') }}</p>
 
 	{% if not matches %}
 	<div class="admin-card">
 		<p>{{ _('No upcoming matches in the next 48 hours.') }}</p>
 	</div>
 	{% else %}
-	<div class="admin-card">
-		<h3>{{ _('Upcoming Matches') }} ({{ matches|length }})</h3>
-		<table class="table">
-			<thead>
-				<tr>
-					<th>#</th>
-					<th>{{ _('Match') }}</th>
-					<th>{{ _('Kickoff (UTC)') }}</th>
-				</tr>
-			</thead>
-			<tbody>
-				{% for match in matches %}
-				<tr>
-					<td>{{ match.match_num }}</td>
-					<td>{{ match.team1 }} vs {{ match.team2 }}</td>
-					<td>{{ match.kickoff_utc.strftime('%b %d, %H:%M') if match.kickoff_utc else 'TBD' }}</td>
-				</tr>
-				{% endfor %}
-			</tbody>
-		</table>
+	<div class="status-summary">
+		<p>{{ matches|length }} {{ _('match(es) in the next 48 hours:') }}</p>
 	</div>
 
-	<div class="admin-card">
-		<h3>{{ _('User Tip Status') }}</h3>
-		<table class="table">
-			<thead>
-				<tr>
-					<th>{{ _('User') }}</th>
-					<th>{{ _('Tipped') }}</th>
-					<th>{{ _('Missing') }}</th>
-					<th>{{ _('Last Tip') }}</th>
-				</tr>
-			</thead>
-			<tbody>
-				{% for s in user_statuses %}
-				<tr class="{{ 'status-missing' if s.missing_matches else 'status-ok' }}">
-					<td><strong>{{ s.user.display_name }}</strong></td>
-					<td>{{ s.tipped_count }}/{{ s.total_count }}</td>
-					<td>
-						{% if s.missing_matches %}
-						{% for m in s.missing_matches[:3] %}{{ m.team1 }} vs {{ m.team2 }}{% if not loop.last %}, {% endif %}{% endfor %}
-						{% if s.missing_matches|length > 3 %} (+{{ s.missing_matches|length - 3 }} {{ _('more') }}){% endif %}
-						{% else %}
-						<span class="text-success">{{ _('All done') }}</span>
-						{% endif %}
-					</td>
-					<td>{{ s.last_tip_at.strftime('%b %d, %H:%M') if s.last_tip_at else _('Never') }}</td>
-				</tr>
-				{% endfor %}
-			</tbody>
-		</table>
-	</div>
+	<table class="status-table">
+		<thead>
+			<tr>
+				<th>#</th>
+				<th>{{ _('Match') }}</th>
+				<th>{{ _('Kickoff') }}</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for match in matches %}
+			<tr>
+				<td>{{ match.match_num }}</td>
+				<td>{{ match.team1 }} vs {{ match.team2 }}</td>
+				<td>{{ kickoff_time(match.kickoff_utc) }}</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+
+	<h3 style="margin-top: 2rem;">{{ _('User Status') }}</h3>
+
+	<table class="status-table">
+		<thead>
+			<tr>
+				<th>{{ _('User') }}</th>
+				<th>{{ _('Tipped') }}</th>
+				<th>{{ _('Missing') }}</th>
+				<th>{{ _('Last Tip') }}</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for s in user_statuses %}
+			<tr class="{{ 'status-missing' if s.missing_matches else 'status-ok' }}">
+				<td><strong>{{ s.user.display_name }}</strong></td>
+				<td>{{ s.tipped_count }}/{{ s.total_count }}</td>
+				<td>
+					{% if s.missing_matches %}
+					{% for m in s.missing_matches[:3] %}{{ m.team1 }} vs {{ m.team2 }}{% if not loop.last %}, {% endif %}{% endfor %}
+					{% if s.missing_matches|length > 3 %} (+{{ s.missing_matches|length - 3 }} {{ _('more') }}){% endif %}
+					{% else %}
+					<span class="text-success">{{ _('All done') }}</span>
+					{% endif %}
+				</td>
+				<td><span data-utc="{{ s.last_tip_at|utc_attr }}">{{ s.last_tip_at.strftime('%b %d, %H:%M') if s.last_tip_at else _('Never') }}</span></td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
 	{% endif %}
 
-	<div class="admin-nav">
+	<div class="admin-nav" style="margin-top: 2rem;">
 		<a href="{{ url_for('admin.dashboard') }}" class="btn btn-primary">{{ _('Back to Admin') }}</a>
 	</div>
 </div>

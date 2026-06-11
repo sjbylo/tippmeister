@@ -21,6 +21,12 @@ compress = Compress()
 def get_locale():
 	if current_user and current_user.is_authenticated and current_user.language:
 		return current_user.language
+	lang = request.args.get('lang')
+	if lang in ('en', 'de'):
+		session['language'] = lang
+		return lang
+	if 'language' in session and session['language'] in ('en', 'de'):
+		return session['language']
 	return request.accept_languages.best_match(['en', 'de']) or 'en'
 
 
@@ -73,9 +79,11 @@ def create_app(config_class=Config):
 	app.register_blueprint(admin_bp, url_prefix='/admin')
 
 	from app.main import translate_round
+	import time
 	app.jinja_env.globals['get_now'] = get_now
 	app.jinja_env.globals['get_locale'] = get_locale
 	app.jinja_env.globals['translate_round'] = translate_round
+	app.jinja_env.globals['cache_bust'] = int(time.time())
 
 	@app.template_filter('utc_attr')
 	def utc_attr_filter(dt):

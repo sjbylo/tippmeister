@@ -61,15 +61,19 @@ print(f"========================")
 # Start HTTP->HTTPS redirect in background
 subprocess.Popen([sys.executable, "/app/http_redirect.py"])
 
+# Start scheduler in a separate process (reminders, admin status, API polling)
+subprocess.Popen([sys.executable, "/app/scheduler_worker.py"])
+
 # Start gunicorn with TLS
 os.execvp("gunicorn", [
 	"gunicorn", "wsgi:application",
 	"--bind", f"0.0.0.0:{PORT}",
 	"--certfile", CERT_FILE,
 	"--keyfile", KEY_FILE,
-	"--workers", "2",
-	"--preload",
-	"--timeout", "120",
+	"--workers", "4",
+	"--threads", "2",
+	"--worker-class", "gthread",
+	"--timeout", "180",
 	"--access-logfile", "-",
 	"--error-logfile", "-",
 ])
