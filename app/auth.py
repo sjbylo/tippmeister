@@ -1,5 +1,6 @@
 import re
 import secrets
+import logging
 from datetime import datetime, timedelta
 from flask import Blueprint, render_template, redirect, url_for, flash, request, current_app
 from flask_babel import gettext as _
@@ -8,6 +9,7 @@ from app import db, limiter
 from app.models import User
 
 auth_bp = Blueprint('auth', __name__)
+log = logging.getLogger(__name__)
 
 
 def validate_display_name(name):
@@ -115,6 +117,7 @@ def login():
 					user.timezone = detected_tz
 					db.session.commit()
 			login_user(user, remember=True)
+			log.info("LOGIN OK: user=%s ip=%s", user.display_name, request.remote_addr)
 			if not user.email_verified:
 				return redirect(url_for('auth.verify_pending'))
 			next_page = request.args.get('next', '')
@@ -123,6 +126,8 @@ def login():
 			return redirect(next_page)
 
 		flash(_("Invalid email or password."), "error")
+		log.warning("FAILED LOGIN: email=%s ip=%s at=%s",
+			email, request.remote_addr, datetime.utcnow().isoformat())
 		return render_template('login.html', email=email)
 
 	return render_template('login.html', email='')

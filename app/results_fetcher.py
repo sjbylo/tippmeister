@@ -1,16 +1,43 @@
 """
-Smart API-Football poller for auto-importing match results.
+World Cup 2026 results poller using ESPN's public scoreboard API.
+
+Primary source: ESPN (live scores, real-time updates, no API key).
+Fallback: worldcup26.ir (final results, no API key).
 
 Adaptive polling: only polls when matches are near, live, or recently finished.
-Budget: ~48 requests on a busy 4-match day (well within 100/day free tier).
 """
 
 import logging
-import requests as http_requests
+import urllib.request
+import json
+import ssl
 
 log = logging.getLogger(__name__)
 
-API_BASE = 'https://v3.football.api-sports.io'
+ESPN_URL = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard'
+FALLBACK_URL = 'https://worldcup26.ir/get/games'
+
+ESPN_TEAM_MAP = {
+	'Czechia': 'Czech Republic',
+	'Bosnia-Herzegovina': 'Bosnia & Herzegovina',
+	'United States': 'USA',
+	'Congo DR': 'DR Congo',
+	'Türkiye': 'Turkey',
+}
+
+FALLBACK_TEAM_MAP = {
+	'Bosnia and Herzegovina': 'Bosnia & Herzegovina',
+	'United States': 'USA',
+	'Democratic Republic of the Congo': 'DR Congo',
+}
+
+
+def _normalize_espn(name):
+	return ESPN_TEAM_MAP.get(name, name)
+
+
+def _normalize_fallback(name):
+	return FALLBACK_TEAM_MAP.get(name, name)
 
 
 def should_poll(app, now):
@@ -23,11 +50,7 @@ def should_poll(app, now):
 		if fetch_paused and fetch_paused.value == 'true':
 			return False
 
-		if not app.config.get('API_FOOTBALL_KEY'):
-			return False
-
 		from datetime import timedelta
-		# Wide window (UTC-12 to UTC+14) so no timezone misses a match day
 		day_start = now.replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(hours=14)
 		day_end = now.replace(hour=23, minute=59, second=59) + timedelta(hours=12)
 
@@ -44,10 +67,8 @@ def should_poll(app, now):
 				return True
 			if m.kickoff_utc:
 				diff = (m.kickoff_utc - now).total_seconds()
-				# 30 min before kickoff
 				if -7200 < diff < 1800:
 					return True
-				# Up to 3 hours after kickoff (covers ET + penalties)
 				if m.status == 'scheduled' and -10800 < diff < 0:
 					return True
 
@@ -55,8 +76,27 @@ def should_poll(app, now):
 		return len(unfinished) > 0
 
 
+def _find_match(home, away, Match):
+	"""Find a match by team names, trying both orderings."""
+	m = Match.query.filter_by(team1=home, team2=away).first()
+	if m:
+		return m, False
+	m = Match.query.filter_by(team1=away, team2=home).first()
+	if m:
+		return m, True
+	return None, False
+
+
+def _http_get_json(url, timeout=15):
+	"""Fetch JSON from a URL."""
+	ctx = ssl.create_default_context()
+	req = urllib.request.Request(url)
+	resp = urllib.request.urlopen(req, context=ctx, timeout=timeout)
+	return json.loads(resp.read())
+
+
 def fetch_and_update(app):
-	"""Poll API-Football and update match results."""
+	"""Poll ESPN for live scores and results. Falls back to worldcup26.ir."""
 	from app import db, get_now
 	from app.models import Match
 	from app.scoring import recalculate_match
@@ -66,96 +106,177 @@ def fetch_and_update(app):
 		if not should_poll(app, now):
 			return
 
-		api_key = app.config.get('API_FOOTBALL_KEY')
-		if not api_key:
-			return
+		updated = 0
 
 		try:
-			headers = {'x-apisports-key': api_key}
-			params = {
-				'league': app.config.get('API_FOOTBALL_LEAGUE_ID', 1),
-				'season': app.config.get('API_FOOTBALL_SEASON', 2026),
-			}
-
-			resp = http_requests.get(
-				f'{API_BASE}/fixtures', headers=headers, params=params, timeout=15
-			)
-			resp.raise_for_status()
-			data = resp.json()
-
-			fixtures = data.get('response', [])
-			log.info(f"API-Football returned {len(fixtures)} fixtures")
-
-			for fixture in fixtures:
-				_process_fixture(fixture, db, Match, recalculate_match)
-
-			db.session.commit()
-
-		except http_requests.RequestException as e:
-			log.error(f"API-Football request failed: {e}")
+			updated = _fetch_espn(db, Match, recalculate_match)
 		except Exception as e:
-			log.error(f"Error processing API-Football data: {e}")
+			log.warning(f"ESPN fetch failed ({e}), trying fallback...")
+			try:
+				updated = _fetch_fallback(db, Match, recalculate_match)
+			except Exception as e2:
+				log.error(f"Fallback also failed: {e2}")
+
+		if updated:
+			log.info(f"Updated {updated} match(es)")
 
 
-def _process_fixture(fixture, db, Match, recalculate_match):
-	"""Process a single API-Football fixture response."""
-	fixture_info = fixture.get('fixture', {})
-	teams = fixture.get('teams', {})
-	goals = fixture.get('goals', {})
-	score_data = fixture.get('score', {})
-	fixture_id = fixture_info.get('id')
-	status_short = fixture_info.get('status', {}).get('short', '')
+def _fetch_espn(db, Match, recalculate_match):
+	"""Fetch from ESPN scoreboard API."""
+	data = _http_get_json(ESPN_URL)
+	events = data.get('events', [])
+	log.info(f"ESPN returned {len(events)} events")
 
-	match = None
-	if fixture_id:
-		match = Match.query.filter_by(api_fixture_id=fixture_id).first()
+	updated = 0
+	for event in events:
+		if _process_espn_event(event, db, Match, recalculate_match):
+			updated += 1
 
+	if updated:
+		db.session.commit()
+	return updated
+
+
+def _process_espn_event(event, db, Match, recalculate_match):
+	"""Process a single ESPN event."""
+	comps = event.get('competitions', [])
+	if not comps:
+		return False
+
+	comp = comps[0]
+	competitors = comp.get('competitors', [])
+	if len(competitors) != 2:
+		return False
+
+	home_team = None
+	away_team = None
+	home_score = None
+	away_score = None
+
+	for c in competitors:
+		team_name = _normalize_espn(c.get('team', {}).get('displayName', ''))
+		score = c.get('score')
+		try:
+			score = int(score) if score else None
+		except (ValueError, TypeError):
+			score = None
+
+		if c.get('homeAway') == 'home':
+			home_team = team_name
+			home_score = score
+		else:
+			away_team = team_name
+			away_score = score
+
+	if not home_team or not away_team:
+		return False
+
+	match, reversed_order = _find_match(home_team, away_team, Match)
 	if not match:
-		match = _find_match_by_teams_and_date(fixture, db.session)
+		return False
 
-	if not match:
-		return
+	if match.status == 'finished' and match.result_source == 'manual':
+		return False
 
-	if not match.api_fixture_id:
-		match.api_fixture_id = fixture_id
+	if home_score is None or away_score is None:
+		return False
 
-	if status_short in ('1H', 'HT', '2H', 'ET', 'P', 'BT', 'LIVE'):
+	if reversed_order:
+		home_score, away_score = away_score, home_score
+
+	status_type = event.get('status', {}).get('type', {}).get('name', '')
+
+	LIVE_STATUSES = {
+		'STATUS_IN_PROGRESS', 'STATUS_FIRST_HALF', 'STATUS_SECOND_HALF',
+		'STATUS_HALFTIME', 'STATUS_EXTRA_TIME', 'STATUS_PENALTIES',
+	}
+	FINAL_STATUSES = {'STATUS_FINAL', 'STATUS_FULL_TIME'}
+
+	if status_type in LIVE_STATUSES and match.status != 'finished':
 		match.status = 'live'
-		home_goals = goals.get('home')
-		away_goals = goals.get('away')
-		if home_goals is not None and away_goals is not None:
-			match.team1_score = home_goals
-			match.team2_score = away_goals
+		match.team1_score = home_score
+		match.team2_score = away_score
+		return True
 
-	elif status_short in ('FT', 'AET', 'PEN'):
+	elif status_type in FINAL_STATUSES and match.status != 'finished':
 		match.status = 'finished'
 		match.result_source = 'auto'
-
-		ft = score_data.get('fulltime', {})
-		match.team1_score = ft.get('home')
-		match.team2_score = ft.get('away')
-
-		et = score_data.get('extratime', {})
-		if et.get('home') is not None:
-			match.team1_extra = et['home']
-			match.team2_extra = et.get('away')
-
-		pen = score_data.get('penalty', {})
-		if pen.get('home') is not None:
-			match.team1_pen = pen['home']
-			match.team2_pen = pen.get('away')
-			if pen['home'] > pen.get('away', 0):
-				match.penalty_winner = match.team1
-			else:
-				match.penalty_winner = match.team2
-
+		match.team1_score = home_score
+		match.team2_score = away_score
 		db.session.commit()
 		recalculate_match(match.id)
 		_send_match_result_notifications(match)
 		log.info(
 			f"Auto-imported result: Match {match.match_num} "
-			f"{match.team1} {match.score_display} {match.team2}"
+			f"{match.team1} {home_score}-{away_score} {match.team2}"
 		)
+		return True
+
+	return False
+
+
+def _fetch_fallback(db, Match, recalculate_match):
+	"""Fetch from worldcup26.ir as fallback."""
+	data = _http_get_json(FALLBACK_URL)
+	games = data.get('games', [])
+	log.info(f"worldcup26.ir returned {len(games)} games (fallback)")
+
+	updated = 0
+	for game in games:
+		if _process_fallback_game(game, db, Match, recalculate_match):
+			updated += 1
+
+	if updated:
+		db.session.commit()
+	return updated
+
+
+def _process_fallback_game(game, db, Match, recalculate_match):
+	"""Process a single game from worldcup26.ir."""
+	home_name = _normalize_fallback(game.get('home_team_name_en', ''))
+	away_name = _normalize_fallback(game.get('away_team_name_en', ''))
+
+	if not home_name or not away_name:
+		return False
+
+	match, reversed_order = _find_match(home_name, away_name, Match)
+	if not match:
+		return False
+
+	if match.status == 'finished' and match.result_source == 'manual':
+		return False
+
+	finished = game.get('finished', '').upper() == 'TRUE'
+	home_score = game.get('home_score')
+	away_score = game.get('away_score')
+
+	try:
+		home_score = int(home_score) if home_score and home_score != 'null' else None
+		away_score = int(away_score) if away_score and away_score != 'null' else None
+	except (ValueError, TypeError):
+		return False
+
+	if home_score is None or away_score is None:
+		return False
+
+	if reversed_order:
+		home_score, away_score = away_score, home_score
+
+	if finished and match.status != 'finished':
+		match.status = 'finished'
+		match.result_source = 'auto'
+		match.team1_score = home_score
+		match.team2_score = away_score
+		db.session.commit()
+		recalculate_match(match.id)
+		_send_match_result_notifications(match)
+		log.info(
+			f"Auto-imported result (fallback): Match {match.match_num} "
+			f"{match.team1} {home_score}-{away_score} {match.team2}"
+		)
+		return True
+
+	return False
 
 
 def _send_match_result_notifications(match):
@@ -174,46 +295,8 @@ def _send_match_result_notifications(match):
 				log.warning(f"Failed to send result email to {user.email}: {e}")
 
 
-def _find_match_by_teams_and_date(fixture, session):
-	"""Try to match an API fixture to a DB match by team names and date."""
-	from app.models import Match
-	from datetime import datetime, timezone
-
-	teams = fixture.get('teams', {})
-	home_name = teams.get('home', {}).get('name', '')
-	away_name = teams.get('away', {}).get('name', '')
-	fixture_date = fixture.get('fixture', {}).get('date', '')
-
-	if not home_name or not away_name:
-		return None
-
-	candidates = Match.query.filter(
-		Match.team1.ilike(f'%{home_name[:10]}%'),
-		Match.team2.ilike(f'%{away_name[:10]}%'),
-	).all()
-
-	if len(candidates) == 1:
-		return candidates[0]
-
-	if fixture_date:
-		try:
-			from dateutil import parser
-			api_dt = parser.isoparse(fixture_date).replace(tzinfo=timezone.utc)
-			for c in candidates:
-				if c.kickoff_utc and abs((c.kickoff_utc - api_dt).total_seconds()) < 7200:
-					return c
-		except Exception:
-			pass
-
-	return None
-
-
 def setup_scheduler(app):
-	"""Configure APScheduler to poll API-Football on an interval."""
-	if not app.config.get('API_FOOTBALL_KEY'):
-		log.info("No API_FOOTBALL_KEY set -- auto-fetch disabled")
-		return None
-
+	"""Configure APScheduler to poll for match results."""
 	from apscheduler.schedulers.background import BackgroundScheduler
 
 	scheduler = BackgroundScheduler()
@@ -221,10 +304,10 @@ def setup_scheduler(app):
 		func=fetch_and_update,
 		args=[app],
 		trigger='interval',
-		minutes=10,
-		id='api_football_poller',
+		minutes=5,
+		id='worldcup_poller',
 		replace_existing=True,
 	)
 	scheduler.start()
-	log.info("API-Football scheduler started (polling every 10 minutes)")
+	log.info("World Cup results scheduler started (ESPN primary, polling every 5 min during matches)")
 	return scheduler

@@ -51,6 +51,7 @@ podman run -d \
 	-e GMAIL_APP_PASSWORD="${GMAIL_APP_PASSWORD:-}" \
 	-e GMAIL_FROM="${GMAIL_FROM:-}" \
 	-e SITE_URL="${SITE_URL:-}" \
+	-e HTTPS_PROXY="http://10.0.0.147:8888" \
 	"$IMAGE_NAME"
 
 echo ""
