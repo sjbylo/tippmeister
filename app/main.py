@@ -129,6 +129,23 @@ def load_predictions_map(match_list):
 	return pmap
 
 
+def _get_untipped_count(now):
+	"""Count upcoming matches with known teams that the user hasn't tipped."""
+	upcoming = Match.query.filter(Match.kickoff_utc > now).all()
+	upcoming_known = [m for m in upcoming if m.has_known_teams]
+	if not upcoming_known:
+		return 0
+	match_ids = [m.id for m in upcoming_known]
+	tipped_ids = set(
+		p.match_id for p in Prediction.query.filter(
+			Prediction.user_id == current_user.id,
+			Prediction.match_id.in_(match_ids),
+			Prediction.team1_score.isnot(None),
+		).all()
+	)
+	return len(match_ids) - len(tipped_ids)
+
+
 def get_filter_options():
 	"""Build the list of available filter tabs."""
 	groups = db.session.query(Match.group_name).filter(
@@ -170,6 +187,8 @@ def matches():
 	users = User.query.order_by(User.display_name).all()
 	predictions_map = load_predictions_map(match_list)
 
+	untipped_count = _get_untipped_count(now)
+
 	resp = make_response(render_template('matches.html',
 		matches=match_list,
 		users=users,
@@ -178,6 +197,7 @@ def matches():
 		filter_type=filter_type,
 		group_names=group_names,
 		knockout_rounds=knockout_rounds,
+		untipped_count=untipped_count,
 	))
 	return _set_filter_cookie(resp, 'matches', filter_type)
 

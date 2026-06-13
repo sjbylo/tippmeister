@@ -3,6 +3,13 @@
 {% block title %}{{ _('Matches') }} - Der Tippmeister{% endblock %}
 {% block content %}
 <div class="matches-page">
+	{% if untipped_count and untipped_count > 0 %}
+	<div class="untipped-banner">
+		<strong>{{ _('You have %(count)d match(es) to tip!', count=untipped_count) }}</strong>
+		<a href="?filter=missing">{{ _('Show them') }}</a>
+	</div>
+	{% endif %}
+
 	<div class="filter-tabs">
 		<a href="?filter=today" class="tab {{ 'active' if filter_type in ('today', 'next') }}">{{ _('Today') }}</a>
 		<a href="?filter=3d" class="tab {{ 'active' if filter_type == '3d' }}">{{ _('3 Days') }}</a>
@@ -62,16 +69,19 @@
 							{% if my_pred.points_awarded >= 3 %}pts-3{% elif my_pred.points_awarded >= 1 %}pts-1{% else %}pts-0{% endif %}
 						{% endif %}">
 				<span class="pred-name">{{ current_user.display_name }}</span>
-				{% if my_pred and my_pred.team1_score is not none %}
-				<span class="pred-score">{{ my_pred.score_display }}</span>
-				{% if match.status == 'finished' %}
-				<span class="pred-points">({{ my_pred.points_awarded }} {{ _('pts') }})</span>
-				{% endif %}
-				{% else %}
-				<span class="pred-score no-pred">{{ _('none') }}</span>
-				{% endif %}
-			</div>
-			<span class="others-toggle" title="{{ _('Show/hide other predictions') }}">&#9660;</span>
+			{% if my_pred and my_pred.team1_score is not none %}
+			<span class="pred-score">{{ my_pred.score_display }}</span>
+			{% if match.status == 'finished' %}
+			<span class="pred-points">({{ my_pred.points_awarded }} {{ _('pts') }})</span>
+			{% endif %}
+			{% else %}
+			<span class="pred-score no-pred">{{ _('none') }}</span>
+			{% endif %}
+		</div>
+		{% if can_predict and (not my_pred or my_pred.team1_score is none) %}
+		<button class="btn btn-sm btn-enter-tip">{{ _('Enter Tip') }}</button>
+		{% endif %}
+		<span class="others-toggle" title="{{ _('Show/hide other predictions') }}">&#9660;</span>
 			</div>
 
 			<div class="pred-row pred-row-others" style="display:none;">

@@ -39,8 +39,7 @@ HTTP_PORT="${HTTP_PORT:-8080}"
 echo "Starting $CONTAINER_NAME on port $PORT (HTTPS) + $HTTP_PORT (HTTP redirect)..."
 podman run -d \
 	--name "$CONTAINER_NAME" \
-	-p "${PORT}:${PORT}" \
-	-p "${HTTP_PORT}:8080" \
+	--network=host \
 	-v tippmeister-data:/data:Z \
 	-e PORT="$PORT" \
 	-e SECRET_KEY="${SECRET_KEY:-}" \
@@ -51,7 +50,7 @@ podman run -d \
 	-e GMAIL_APP_PASSWORD="${GMAIL_APP_PASSWORD:-}" \
 	-e GMAIL_FROM="${GMAIL_FROM:-}" \
 	-e SITE_URL="${SITE_URL:-}" \
-	-e HTTPS_PROXY="http://10.0.0.147:8888" \
+	-e HTTPS_PROXY="http://127.0.0.1:8888" \
 	"$IMAGE_NAME"
 
 echo ""

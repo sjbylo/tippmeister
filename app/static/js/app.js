@@ -105,10 +105,18 @@
 	var modal = null;
 	var modalMatchId = null;
 	var modalSourceEl = null;
+	var modalSaveAndNext = false;
 
 	function getCSRFToken() {
 		var meta = document.querySelector('meta[name="csrf-token"]');
 		return meta ? meta.getAttribute('content') : '';
+	}
+
+	function getUntippedCards() {
+		return Array.from(document.querySelectorAll('.match-card-predict')).filter(function(card) {
+			var scoreEl = card.querySelector('.own-pred .pred-score');
+			return scoreEl && scoreEl.classList.contains('no-pred');
+		});
 	}
 
 	function openPredModal(matchId, team1, team2, isKnockout, curT1, curT2, curPen, sourceEl) {
@@ -138,6 +146,14 @@
 			penRow.dataset.knockout = 'false';
 		}
 
+		// Show/hide Save & Next based on remaining untipped cards
+		var saveNextBtn = document.getElementById('modal-save-next');
+		if (saveNextBtn) {
+			var untipped = getUntippedCards();
+			var hasNext = untipped.some(function(c) { return c.dataset.matchId !== String(matchId); });
+			saveNextBtn.style.display = hasNext ? '' : 'none';
+		}
+
 		modal.style.display = 'flex';
 		document.getElementById('modal-t1').focus();
 	}
@@ -146,6 +162,7 @@
 		if (modal) modal.style.display = 'none';
 		modalMatchId = null;
 		modalSourceEl = null;
+		modalSaveAndNext = false;
 	}
 
 	function checkModalDraw() {
@@ -155,18 +172,25 @@
 		var t2 = document.getElementById('modal-t2').value;
 		if (t1 !== '' && t2 !== '' && parseInt(t1) === parseInt(t2)) {
 			penRow.style.display = 'flex';
+			penRow.classList.add('pen-highlight');
 		} else {
 			penRow.style.display = 'none';
+			penRow.classList.remove('pen-highlight');
 		}
 	}
 
-	function saveModal() {
+	function saveModal(andNext) {
 		var t1 = document.getElementById('modal-t1').value;
 		var t2 = document.getElementById('modal-t2').value;
 		var penRow = document.getElementById('modal-pen-row');
 		var pen = '';
 		if (penRow.dataset.knockout === 'true' && penRow.style.display !== 'none') {
 			pen = document.getElementById('modal-pen').value;
+			if (!pen) {
+				showModalError(t('selectPenaltyWinner', 'Please select which team wins on penalties!'));
+				penRow.classList.add('pen-error');
+				return;
+			}
 		}
 
 		if (t1 === '' || t2 === '') {
@@ -181,8 +205,12 @@
 		};
 
 		var saveBtn = document.getElementById('modal-save');
+		var saveNextBtn = document.getElementById('modal-save-next');
 		saveBtn.disabled = true;
+		if (saveNextBtn) saveNextBtn.disabled = true;
 		saveBtn.textContent = '...';
+
+		var currentMatchId = modalMatchId;
 
 		fetch('/predict/' + modalMatchId, {
 			method: 'POST',
@@ -195,6 +223,7 @@
 			return resp.json();
 		}).then(function(data) {
 			saveBtn.disabled = false;
+			if (saveNextBtn) saveNextBtn.disabled = false;
 			saveBtn.textContent = t('save', 'Save');
 			if (data.success) {
 				if (modalSourceEl) {
@@ -202,15 +231,57 @@
 					if (pen) modalSourceEl.innerHTML += '<small>(' + pen.substring(0, 3) + ')</small>';
 					modalSourceEl.classList.remove('no-pred');
 				}
-				closeModal();
+				// Remove the Enter Tip button from this card
+				var card = document.querySelector('.match-card-predict[data-match-id="' + currentMatchId + '"]');
+				if (card) {
+					var enterBtn = card.querySelector('.btn-enter-tip');
+					if (enterBtn) enterBtn.remove();
+				}
+
+				if (andNext) {
+					openNextUntipped(currentMatchId);
+				} else {
+					closeModal();
+					showSavedFlash(card || modalSourceEl);
+				}
 			} else {
 				showModalError(data.error || t('saveFailed', 'Save failed.'));
 			}
 		}).catch(function() {
 			saveBtn.disabled = false;
+			if (saveNextBtn) saveNextBtn.disabled = false;
 			saveBtn.textContent = t('save', 'Save');
 			showModalError(t('networkError', 'Network error. Please try again.'));
 		});
+	}
+
+	function openNextUntipped(currentMatchId) {
+		var untipped = getUntippedCards().filter(function(c) {
+			return c.dataset.matchId !== String(currentMatchId);
+		});
+		if (untipped.length > 0) {
+			var next = untipped[0];
+			var d = next.dataset;
+			openPredModal(
+				d.matchId, d.team1, d.team2,
+				d.knockout === 'true',
+				d.curT1 || '', d.curT2 || '', d.curPen || '',
+				next.querySelector('.own-pred .pred-score')
+			);
+		} else {
+			closeModal();
+		}
+	}
+
+	function showSavedFlash(nearEl) {
+		if (!nearEl) return;
+		var flash = document.createElement('span');
+		flash.className = 'save-flash';
+		flash.textContent = t('saved', 'Saved!');
+		nearEl.closest('.match-card, .pred-cell') && nearEl.closest('.match-card, .pred-cell').appendChild(flash);
+		if (!flash.parentElement) nearEl.appendChild(flash);
+		setTimeout(function() { flash.classList.add('fade-out'); }, 1200);
+		setTimeout(function() { flash.remove(); }, 1800);
 	}
 
 	function showModalError(msg) {
@@ -222,7 +293,11 @@
 	function setupModal() {
 		if (!document.getElementById('pred-modal')) return;
 
-		document.getElementById('modal-save').addEventListener('click', saveModal);
+		document.getElementById('modal-save').addEventListener('click', function() { saveModal(false); });
+		var saveNextBtn = document.getElementById('modal-save-next');
+		if (saveNextBtn) {
+			saveNextBtn.addEventListener('click', function() { saveModal(true); });
+		}
 		document.getElementById('modal-cancel').addEventListener('click', closeModal);
 		document.getElementById('modal-backdrop').addEventListener('click', closeModal);
 		document.getElementById('modal-t1').addEventListener('input', checkModalDraw);
@@ -231,6 +306,10 @@
 		document.addEventListener('keydown', function(e) {
 			if (e.key === 'Escape' && modal && modal.style.display !== 'none') {
 				closeModal();
+			}
+			if (e.key === 'Enter' && modal && modal.style.display !== 'none') {
+				e.preventDefault();
+				saveModal(false);
 			}
 		});
 
@@ -265,6 +344,86 @@
 		});
 	}
 
+	// Per-row AJAX save on My Tips page (auto-save)
+	function setupInlineSave() {
+		var form = document.getElementById('predictionsForm');
+		if (!form) return;
+
+		var rows = form.querySelectorAll('.pred-row');
+		rows.forEach(function(row) {
+			var matchId = row.dataset.matchId;
+			if (!matchId) return;
+
+			var t1Input = row.querySelector('[name="t1_' + matchId + '"]');
+			var t2Input = row.querySelector('[name="t2_' + matchId + '"]');
+			if (!t1Input || !t2Input) return;
+
+			var statusEl = document.createElement('span');
+			statusEl.className = 'row-status';
+			var inputRow = row.querySelector('.pred-input-row');
+			inputRow.appendChild(statusEl);
+
+			var saveTimeout = null;
+
+			function trySave() {
+				var t1 = t1Input.value;
+				var t2 = t2Input.value;
+				if (t1 === '' || t2 === '') return;
+
+				var pen = '';
+				var penSelect = row.querySelector('.pen-select');
+				var isKnockout = row.dataset.knockout === 'true';
+				if (isKnockout && parseInt(t1) === parseInt(t2)) {
+					pen = penSelect ? penSelect.value : '';
+					if (!pen) return;
+				}
+
+				statusEl.textContent = '...';
+				statusEl.className = 'row-status saving';
+
+				fetch('/predict/' + matchId, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'X-CSRFToken': getCSRFToken()
+					},
+					body: JSON.stringify({
+						team1_score: parseInt(t1),
+						team2_score: parseInt(t2),
+						penalty_winner: pen
+					})
+				}).then(function(r) { return r.json(); })
+				.then(function(data) {
+					if (data.success) {
+						statusEl.textContent = '\u2713';
+						statusEl.className = 'row-status saved';
+						row.classList.add('row-saved');
+					} else {
+						statusEl.textContent = '\u2717';
+						statusEl.className = 'row-status error';
+					}
+				}).catch(function() {
+					statusEl.textContent = '\u2717';
+					statusEl.className = 'row-status error';
+				});
+			}
+
+			function debounceSave() {
+				if (saveTimeout) clearTimeout(saveTimeout);
+				saveTimeout = setTimeout(trySave, 600);
+			}
+
+			t1Input.addEventListener('input', debounceSave);
+			t2Input.addEventListener('input', debounceSave);
+			var penSelect = row.querySelector('.pen-select');
+			if (penSelect) penSelect.addEventListener('change', debounceSave);
+		});
+
+		// Hide the bulk submit button
+		var bulkSubmit = form.querySelector('.form-actions');
+		if (bulkSubmit) bulkSubmit.style.display = 'none';
+	}
+
 	// Expose for inline use
 	window.openPredModal = openPredModal;
 
@@ -274,5 +433,6 @@
 		startNowBar();
 		setupOthersToggle();
 		setupModal();
+		setupInlineSave();
 	});
 })();

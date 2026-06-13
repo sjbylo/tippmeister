@@ -1183,3 +1183,100 @@ a:hover {
 .status-ok td { color: var(--green-light); }
 .text-success { color: var(--green-light); }
 .text-muted { color: var(--text-muted); }
+
+/* Enter Tip button */
+.btn-enter-tip {
+	font-size: 0.75rem;
+	padding: 0.2rem 0.6rem;
+	background: var(--accent);
+	color: #fff;
+	border: none;
+	border-radius: 4px;
+	cursor: pointer;
+	margin-left: 0.5rem;
+	animation: pulse-tip 2s ease-in-out infinite;
+}
+@keyframes pulse-tip {
+	0%, 100% { opacity: 1; }
+	50% { opacity: 0.7; }
+}
+.btn-enter-tip:hover {
+	background: var(--accent-hover, #2563eb);
+}
+
+/* Untipped matches banner */
+.untipped-banner {
+	background: rgba(234, 179, 8, 0.15);
+	border: 1px solid rgba(234, 179, 8, 0.4);
+	border-radius: 8px;
+	padding: 0.75rem 1.2rem;
+	margin-bottom: 1rem;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+}
+.untipped-banner strong {
+	color: #eab308;
+}
+.untipped-banner a {
+	color: var(--accent);
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+/* Save & Next button */
+.btn-save-next {
+	font-size: 0.85rem;
+}
+
+/* Penalty callout */
+.pen-highlight {
+	background: rgba(234, 179, 8, 0.1);
+	border: 1px solid rgba(234, 179, 8, 0.5);
+	border-radius: 6px;
+	padding: 0.5rem;
+	margin-top: 0.5rem;
+	animation: pen-flash 0.5s ease-out;
+}
+.pen-error {
+	border-color: var(--red) !important;
+	box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.3);
+}
+@keyframes pen-flash {
+	from { background: rgba(234, 179, 8, 0.3); }
+	to { background: rgba(234, 179, 8, 0.1); }
+}
+
+/* Save flash indicator */
+.save-flash {
+	position: absolute;
+	top: 0.5rem;
+	right: 0.5rem;
+	background: var(--green-light);
+	color: #000;
+	padding: 0.2rem 0.6rem;
+	border-radius: 4px;
+	font-size: 0.75rem;
+	font-weight: 600;
+	pointer-events: none;
+	transition: opacity 0.5s;
+}
+.save-flash.fade-out {
+	opacity: 0;
+}
+
+/* Per-row auto-save status (My Tips) */
+.row-status {
+	margin-left: 0.7rem;
+	font-size: 0.85rem;
+	font-weight: 600;
+	min-width: 1.2rem;
+	text-align: center;
+}
+.row-status.saving { color: var(--text-muted); }
+.row-status.saved { color: var(--green-light); }
+.row-status.error { color: var(--red); }
+.row-saved {
+	border-left: 3px solid var(--green-light);
+}
