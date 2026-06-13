@@ -1009,3 +1009,24 @@ msgstr "Nie"
 msgid "Back to Admin"
 msgstr "Zurück zur Admin-Seite"
 
+msgid "Enter Tip"
+msgstr "Tipp abgeben"
+
+msgid "Save & Next"
+msgstr "Speichern & Weiter"
+
+msgid "Show them"
+msgstr "Anzeigen"
+
+msgid "You have %(count)d match(es) to tip!"
+msgstr "Du hast %(count)d Spiel(e) noch nicht getippt!"
+
+msgid "Please select which team wins on penalties!"
+msgstr "Bitte wähle aus, wer im Elfmeterschießen gewinnt!"
+
+msgid "Saved!"
+msgstr "Gespeichert!"
+
+msgid "Avg. Points/Match"
+msgstr "Durchschn. Punkte/Spiel"
+
