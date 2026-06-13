@@ -9,6 +9,13 @@ from app.models import Match, Prediction, User
 
 main_bp = Blueprint('main', __name__)
 
+
+@main_bp.route('/app-version')
+def app_version():
+	"""Lightweight endpoint for client-side version check."""
+	from flask import current_app
+	return jsonify(v=current_app.jinja_env.globals.get('cache_bust', 0))
+
 KNOCKOUT_ROUNDS = (
 	'Round of 32', 'Round of 16', 'Quarter-final',
 	'Semi-final', 'Match for third place', 'Final'

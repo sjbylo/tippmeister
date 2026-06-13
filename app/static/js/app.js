@@ -424,6 +424,22 @@
 		if (bulkSubmit) bulkSubmit.style.display = 'none';
 	}
 
+	// Auto-refresh when app is updated
+	function setupVersionCheck() {
+		var initialVersion = null;
+		function check() {
+			fetch('/app-version').then(function(r) { return r.json(); }).then(function(data) {
+				if (initialVersion === null) {
+					initialVersion = data.v;
+				} else if (data.v !== initialVersion) {
+					window.location.reload();
+				}
+			}).catch(function() {});
+		}
+		check();
+		setInterval(check, 120000);
+	}
+
 	// Expose for inline use
 	window.openPredModal = openPredModal;
 
@@ -434,5 +450,6 @@
 		setupOthersToggle();
 		setupModal();
 		setupInlineSave();
+		setupVersionCheck();
 	});
 })();
