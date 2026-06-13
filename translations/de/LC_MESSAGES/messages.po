@@ -1030,3 +1030,6 @@ msgstr "Gespeichert!"
 msgid "Avg. Points/Match"
 msgstr "Durchschn. Punkte/Spiel"
 
+msgid "Groups"
+msgstr "Gruppen"
+

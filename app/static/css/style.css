@@ -1184,6 +1184,49 @@ a:hover {
 .text-success { color: var(--green-light); }
 .text-muted { color: var(--text-muted); }
 
+/* Groups dropdown in filter tabs */
+.tab-dropdown {
+	position: relative;
+	display: inline-block;
+}
+.tab-dropdown-menu {
+	display: none;
+	position: absolute;
+	top: 100%;
+	left: 0;
+	z-index: 100;
+	background: var(--bg-card, #1e293b);
+	border: 1px solid rgba(255,255,255,0.2);
+	border-radius: 8px;
+	padding: 0.4rem;
+	margin-top: 0.3rem;
+	min-width: 120px;
+	box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+	display: none;
+	flex-wrap: wrap;
+	gap: 0.25rem;
+}
+.tab-dropdown.open .tab-dropdown-menu {
+	display: flex;
+}
+.tab-dropdown-item {
+	display: block;
+	padding: 0.35rem 0.7rem;
+	border-radius: 4px;
+	font-size: 0.8rem;
+	color: var(--text-muted);
+	text-decoration: none;
+	white-space: nowrap;
+}
+.tab-dropdown-item:hover {
+	background: rgba(255,255,255,0.1);
+	color: #fff;
+}
+.tab-dropdown-item.active {
+	background: var(--accent);
+	color: #fff;
+}
+
 /* Enter Tip button */
 .btn-enter-tip {
 	font-size: 0.75rem;

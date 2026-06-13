@@ -440,6 +440,15 @@
 		setInterval(check, 120000);
 	}
 
+	// Close group dropdown when clicking outside
+	function setupDropdowns() {
+		document.addEventListener('click', function(e) {
+			document.querySelectorAll('.tab-dropdown.open').forEach(function(dd) {
+				if (!dd.contains(e.target)) dd.classList.remove('open');
+			});
+		});
+	}
+
 	// Expose for inline use
 	window.openPredModal = openPredModal;
 
@@ -451,5 +460,6 @@
 		setupModal();
 		setupInlineSave();
 		setupVersionCheck();
+		setupDropdowns();
 	});
 })();

@@ -14,9 +14,14 @@
 		<a href="?filter=today" class="tab {{ 'active' if filter_type in ('today', 'next') }}">{{ _('Today') }}</a>
 		<a href="?filter=3d" class="tab {{ 'active' if filter_type == '3d' }}">{{ _('3 Days') }}</a>
 		<a href="?filter=7d" class="tab {{ 'active' if filter_type == '7d' }}">{{ _('7 Days') }}</a>
-		{% for g in group_names %}
-		<a href="?filter={{ g }}" class="tab {{ 'active' if filter_type == g }}">{{ g }}</a>
-		{% endfor %}
+		<span class="tab-dropdown">
+			<button class="tab {{ 'active' if filter_type in group_names }}" onclick="this.parentElement.classList.toggle('open')">{{ _('Groups') }} &#9662;</button>
+			<div class="tab-dropdown-menu">
+				{% for g in group_names %}
+				<a href="?filter={{ g }}" class="tab-dropdown-item {{ 'active' if filter_type == g }}">{{ g }}</a>
+				{% endfor %}
+			</div>
+		</span>
 		{% for r in knockout_rounds %}
 		<a href="?filter={{ r }}" class="tab {{ 'active' if filter_type == r }}">{{ translate_round(r) }}</a>
 		{% endfor %}
