@@ -122,13 +122,25 @@ def fetch_and_update(app):
 
 
 def _fetch_espn(db, Match, recalculate_match):
-	"""Fetch from ESPN scoreboard API."""
+	"""Fetch from ESPN scoreboard API (default + today's date to catch all matches)."""
+	from datetime import datetime, timezone
+
+	all_events = []
+
 	data = _http_get_json(ESPN_URL)
-	events = data.get('events', [])
-	log.info(f"ESPN returned {len(events)} events")
+	all_events.extend(data.get('events', []))
+
+	today = datetime.now(timezone.utc).strftime('%Y%m%d')
+	data2 = _http_get_json(f"{ESPN_URL}?dates={today}")
+	seen_ids = {e['id'] for e in all_events}
+	for e in data2.get('events', []):
+		if e['id'] not in seen_ids:
+			all_events.append(e)
+
+	log.info(f"ESPN returned {len(all_events)} events (default + {today})")
 
 	updated = 0
-	for event in events:
+	for event in all_events:
 		if _process_espn_event(event, db, Match, recalculate_match):
 			updated += 1
 
